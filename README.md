@@ -1,26 +1,56 @@
 # chess2img
 
-[![npm version](https://img.shields.io/npm/v/chess2img)](https://www.npmjs.com/package/chess2img)
-[![License: MIT](https://img.shields.io/npm/l/chess2img)](https://www.npmjs.com/package/chess2img)
+<div align="center">
+  <img src="./assets/themes/cburnett/wK.png" alt="chess2img king icon" width="88" />
+  <p>Generate PNG chessboard images from FEN, PGN, or board arrays in Node.js.</p>
+  <p>
+    <a href="https://www.npmjs.com/package/chess2img"><img src="https://img.shields.io/npm/v/chess2img" alt="npm version" /></a>
+    <a href="https://www.npmjs.com/package/chess2img"><img src="https://img.shields.io/npm/dm/chess2img" alt="npm downloads" /></a>
+    <a href="https://www.npmjs.com/package/chess2img"><img src="https://img.shields.io/npm/l/chess2img" alt="license" /></a>
+    <a href="https://github.com/ZiriloXXX/chess2img"><img src="https://img.shields.io/github/stars/ZiriloXXX/chess2img" alt="GitHub stars" /></a>
+  </p>
+</div>
 
-`chess2img` renders PNG chess board images from FEN, PGN, or board-array inputs for Node.js with a small Promise-based API for JavaScript and TypeScript users.
+## Overview
+
+`chess2img` renders chessboard PNGs from FEN, PGN, or board-array inputs with a small Promise-based API for JavaScript and TypeScript users on Node.js.
+
+## Features
+
+- Render PNG chessboard images from `fen`, `pgn`, or `board` input.
+- Use five bundled built-in themes: `merida`, `alpha`, `cburnett`, `cheq`, and `leipzig`.
+- Highlight squares such as the last move or key tactical ideas.
+- Customize board colors, size, padding, and board orientation.
+- Use either the functional `renderChess(...)` API or the `ChessImageGenerator` class API.
+- Register custom themes globally or pass a theme inline for one-off rendering.
+- Consume the package from both JavaScript and TypeScript projects.
+
+## Example Output
+
+Opening `1.e4` with a Chess.com-like board palette, highlighted origin and destination squares, and the built-in `cburnett` piece set.
+
+<img src="./assets/readme/chesscom-opening-e4-cburnett.png" alt="Opening 1.e4 example board" width="480" />
 
 ## Quick Start
-
-Install:
 
 ```bash
 npm install chess2img
 ```
-
-Render a board image:
 
 ```ts
 import { writeFile } from "node:fs/promises";
 import { renderChess } from "chess2img";
 
 const png = await renderChess({
-  fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+  fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+  size: 480,
+  style: "cburnett",
+  colors: {
+    lightSquare: "#EEEED2",
+    darkSquare: "#769656",
+    highlight: "rgba(246, 246, 105, 0.6)",
+  },
+  highlightSquares: ["e2", "e4"],
 });
 
 await writeFile("board.png", png);
@@ -28,19 +58,13 @@ await writeFile("board.png", png);
 
 `renderChess(...)` returns a `Promise<Buffer>` containing PNG data.
 
-## Example Output
-
-Example board rendered with a built-in theme:
-
-![Example board output](https://raw.githubusercontent.com/ZiriloXXX/chess2img/main/tests/fixtures/golden/board-initial-cburnett.png)
-
 ## Installation
 
 ```bash
 npm install chess2img
 ```
 
-## Node And Canvas Requirements
+### Node And Canvas Requirements
 
 - Node.js `18+`
 - native build support for `canvas`
@@ -48,69 +72,114 @@ npm install chess2img
 
 If `canvas` fails to install, verify your system packages first. The library ships `canvas` as a direct dependency, but native prerequisites still need to exist on the host.
 
-## JavaScript Usage
+## Basic Usage
+
+### Functional API
+
+```ts
+import { writeFile } from "node:fs/promises";
+import { renderChess } from "chess2img";
+
+const png = await renderChess({
+  fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+  size: 480,
+  style: "merida",
+});
+
+await writeFile("board.png", png);
+```
+
+### Class API
+
+```ts
+import { ChessImageGenerator } from "chess2img";
+
+const generator = new ChessImageGenerator({
+  size: 800,
+  style: "alpha",
+});
+
+await generator.loadPGN("1. e4 e5 2. Nf3 Nc6 3. Bb5 a6");
+generator.setHighlights(["e4", "e5"]);
+
+await generator.toFile("board.png");
+```
+
+### JavaScript Usage
 
 ```js
-const { ChessImageGenerator } = require("chess2img");
+const { renderChess } = require("chess2img");
+const { writeFile } = require("node:fs/promises");
 
 async function main() {
-  const generator = new ChessImageGenerator({
-    size: 800,
-    style: "alpha",
+  const png = await renderChess({
+    fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+    style: "merida",
   });
 
-  await generator.loadPGN("1. e4 e5 2. Nf3 Nc6 3. Bb5 a6");
-  generator.setHighlights(["e4", "e5"]);
-
-  const buffer = await generator.toBuffer();
-  await generator.toFile("board.png");
+  await writeFile("board.png", png);
 }
 
 main().catch(console.error);
 ```
 
-## TypeScript Usage
+## Built-In Themes
+
+Bundled built-in themes:
+
+- `merida`
+- `alpha`
+- `cburnett`
+- `cheq`
+- `leipzig`
+
+Built-in themes are vendored in-package and render through the same theme pipeline as custom themes.
+
+## Custom Themes
+
+Register a reusable theme globally:
 
 ```ts
-import { ChessImageGenerator, renderChess } from "chess2img";
+import { registerTheme } from "chess2img";
 
-const buffer = await renderChess({
-  board: [
-    ["r", "n", "b", "q", "k", "b", "n", "r"],
-    ["p", "p", "p", "p", "p", "p", "p", "p"],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    [null, null, null, null, null, null, null, null],
-    ["P", "P", "P", "P", "P", "P", "P", "P"],
-    ["R", "N", "B", "Q", "K", "B", "N", "R"],
-  ],
-  size: 640,
-  style: "cburnett",
+registerTheme({
+  name: "custom-theme",
+  displayName: "Custom Theme",
+  license: "MIT",
+  attribution: "Theme author or package source",
+  pieces: {
+    // 12 canonical pieces required
+  },
 });
-
-const generator = new ChessImageGenerator({ size: 640, theme: "leipzig" });
-await generator.loadFEN("4k3/8/8/3p4/4P3/8/8/4K3 w - - 0 1");
-await generator.toFile("board.png");
 ```
+
+Or pass either:
+
+- a registered custom theme name through `theme: "custom-theme"`
+- an inline `ThemeDefinition` object through `theme: { ... }`
+
+Custom themes may use either:
+
+- `svg` assets
+- `png` assets
 
 ## API
 
+### Public Exports
+
+- `new ChessImageGenerator(options?)`
+- `renderChess(options)`
+- `registerTheme(theme)`
+
+### Functional API
+
+`renderChess(...)` accepts exactly one position source:
+
+- `fen`
+- `pgn`
+- `board`
+
 ### Class API
-
-```ts
-const generator = new ChessImageGenerator({
-  size: 800,
-  style: "merida",
-  flipped: false,
-});
-
-await generator.loadFEN(fen);
-generator.setHighlights(["e4", "d5"]);
-
-const buffer = await generator.toBuffer();
-await generator.toFile("board.png");
-```
 
 Methods:
 
@@ -129,23 +198,7 @@ Semantics:
 - loading a new position clears highlights
 - constructor defaults persist across position loads
 
-### Functional API
-
-```ts
-const buffer = await renderChess({
-  fen,
-  size: 800,
-  style: "merida",
-});
-```
-
-`renderChess` accepts exactly one of:
-
-- `fen`
-- `pgn`
-- `board`
-
-## Options Reference
+### Options
 
 - `size`: board size in pixels
 - `padding`: `[top, right, bottom, left]`
@@ -157,43 +210,7 @@ const buffer = await renderChess({
 - `colors.darkSquare`
 - `colors.highlight`
 
-## Built-In Styles
-
-- `merida`
-- `alpha`
-- `cburnett`
-- `cheq`
-- `leipzig`
-
-## Custom Themes
-
-Register a reusable theme globally:
-
-```ts
-import { registerTheme } from "chess2img";
-
-registerTheme({
-  name: "custom-theme",
-  displayName: "Custom Theme",
-  license: "MIT",
-  attribution: "Project-authored",
-  pieces: {
-    // 12 canonical pieces required
-  },
-});
-```
-
-Or pass either:
-
-- a registered custom theme name through `theme: "custom-theme"`
-- an inline `ThemeDefinition` object through `theme: { ... }`
-
-Custom themes may use either:
-
-- `svg` assets
-- `png` assets
-
-## Error Model
+### Errors
 
 The library exports:
 
@@ -203,30 +220,8 @@ The library exports:
 - `RenderError`
 - `IOError`
 
-## Architecture Summary
+## License
 
-- `core` parses and validates chess position input into a canonical board model
-- `themes` validates, registers, and resolves built-in or custom themes
-- `render` rasterizes SVG or PNG theme assets and renders PNG output through `canvas`
-- `api` orchestrates parsing, theme resolution, rendering, and file output
-
-## Migration From `chess-image-generator`
-
-| Old | New | Difference |
-| --- | --- | --- |
-| `loadArray` | `loadBoard` | renamed for clarity |
-| `highlightSquares([...])` | `setHighlights([...])` | replacement semantics are explicit |
-| `generateBuffer()` | `toBuffer()` | same role, new naming |
-| `generatePNG(path)` | `toFile(path)` | IO is explicit in the API name |
-| `style` only | `style` or `theme` | `theme` is the canonical path |
-
-## Troubleshooting
-
-- `canvas` install failures usually indicate missing native prerequisites on the host
-- `ValidationError` from `renderChess` usually means multiple position inputs were provided or an option shape is invalid
-- `ThemeError` usually indicates an unknown theme name or an incomplete custom theme definition
-- `RenderError` usually indicates asset decoding/rasterization problems
-
-## Asset Attribution
+`chess2img` is distributed under the MIT license in package metadata.
 
 Bundled built-in themes are derived from the upstream `andyruwruw/chess-image-generator` resource packs and are vendored in-package for deterministic installs. Provenance and licensing notes live in [ATTRIBUTION.md](./ATTRIBUTION.md).
