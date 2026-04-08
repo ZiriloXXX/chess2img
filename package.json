@@ -1,6 +1,6 @@
 {
   "name": "chess2img",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Modern chess board image rendering for Node.js",
   "license": "MIT",
   "repository": {
