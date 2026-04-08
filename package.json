@@ -1,0 +1,52 @@
+{
+  "name": "chess2img",
+  "version": "0.1.0",
+  "description": "Modern chess board image rendering for Node.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZiriloXXX/chess2img.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ZiriloXXX/chess2img/issues"
+  },
+  "homepage": "https://github.com/ZiriloXXX/chess2img#readme",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "assets",
+    "README.md",
+    "ATTRIBUTION.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "clean": "rm -rf dist coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "canvas": "^3.2.3",
+    "chess.js": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.3"
+  }
+}
