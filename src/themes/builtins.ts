@@ -30,9 +30,9 @@ let initialized = false;
 
 function assetPath(themeName: PieceStyle, pieceKey: PieceKey): string {
   const candidates = [
-    resolve(__dirname, "../../assets/themes", themeName, `${pieceKey}.svg`),
-    resolve(__dirname, "../assets/themes", themeName, `${pieceKey}.svg`),
-    resolve(process.cwd(), "assets/themes", themeName, `${pieceKey}.svg`),
+    resolve(__dirname, "../../assets/themes", themeName, `${pieceKey}.png`),
+    resolve(__dirname, "../assets/themes", themeName, `${pieceKey}.png`),
+    resolve(process.cwd(), "assets/themes", themeName, `${pieceKey}.png`),
   ];
 
   const match = candidates.find((candidate) => existsSync(candidate));
@@ -43,13 +43,14 @@ function createBuiltInTheme(themeName: PieceStyle): ThemeDefinition {
   return {
     name: themeName,
     displayName: themeName[0].toUpperCase() + themeName.slice(1),
-    license: "MIT",
-    attribution: "Project-authored built-in SVG theme",
+    license: "Derived from upstream chess-image-generator resource pack; original pack license not fully verified",
+    attribution:
+      "Derived from andyruwruw/chess-image-generator bundled resources; upstream README cites Marcel van Kervinck as source",
     pieces: Object.fromEntries(
       PIECE_KEYS.map((pieceKey) => [
         pieceKey,
         {
-          kind: "svg",
+          kind: "png",
           source: assetPath(themeName, pieceKey),
         },
       ]),

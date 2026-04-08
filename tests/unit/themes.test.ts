@@ -43,9 +43,31 @@ function createTheme(name: string): ThemeDefinition {
   };
 }
 
+function createPngTheme(name: string): ThemeDefinition {
+  return {
+    name,
+    displayName: name,
+    license: "MIT",
+    attribution: "Upstream-derived raster theme",
+    pieces: Object.fromEntries(
+      PIECES.map((piece) => [
+        piece,
+        {
+          kind: "png",
+          source: `/virtual/${name}/${piece}.png`,
+        },
+      ]),
+    ) as ThemeDefinition["pieces"],
+  };
+}
+
 describe("validateThemeDefinition", () => {
   it("rejects invalid names", () => {
     expect(() => validateThemeDefinition(createTheme("Bad Name"))).toThrow(ValidationError);
+  });
+
+  it("accepts PNG-backed piece assets", () => {
+    expect(() => validateThemeDefinition(createPngTheme("png-theme"))).not.toThrow();
   });
 
   it("rejects incomplete piece maps", () => {
@@ -78,7 +100,7 @@ describe("built-in themes", () => {
       "leipzig",
     ]);
     expect(getTheme("merida")?.name).toBe("merida");
-    expect(getTheme("leipzig")?.pieces.bQ.kind).toBe("svg");
+    expect(getTheme("leipzig")?.pieces.bQ.kind).toBe("png");
   });
 });
 

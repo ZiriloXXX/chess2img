@@ -2,11 +2,12 @@ import { createCanvas } from "canvas";
 import { SQUARES } from "../core/board";
 import { createBoardGeometry } from "../core/geometry";
 import { RenderError } from "../types/errors";
+import type { ThemeAssetSource } from "../types/types";
 import { createRasterCacheKey, RasterAssetCache } from "./asset-cache";
 import type { RenderRequest, Renderer } from "./renderer";
-import { rasterizeSvgAsset } from "./rasterizer";
+import { rasterizeThemeAsset } from "./rasterizer";
 
-const pieceRasterCache = new RasterAssetCache<Awaited<ReturnType<typeof rasterizeSvgAsset>>>();
+const pieceRasterCache = new RasterAssetCache<Awaited<ReturnType<typeof rasterizeThemeAsset>>>();
 
 function isDarkSquare(square: string): boolean {
   const fileIndex = square.charCodeAt(0) - 97;
@@ -14,7 +15,12 @@ function isDarkSquare(square: string): boolean {
   return (fileIndex + rankNumber) % 2 === 1;
 }
 
-async function getPieceRaster(themeName: string, pieceKey: string, assetPath: string, squareSize: number) {
+async function getPieceRaster(
+  themeName: string,
+  pieceKey: string,
+  asset: ThemeAssetSource,
+  squareSize: number,
+) {
   const cacheKey = createRasterCacheKey(themeName, pieceKey, squareSize, "png-canvas");
   const cached = pieceRasterCache.get(cacheKey);
 
@@ -22,7 +28,7 @@ async function getPieceRaster(themeName: string, pieceKey: string, assetPath: st
     return cached;
   }
 
-  const raster = await rasterizeSvgAsset(assetPath, squareSize);
+  const raster = await rasterizeThemeAsset(asset, squareSize);
   pieceRasterCache.set(cacheKey, raster);
   return raster;
 }
@@ -69,11 +75,10 @@ export class CanvasPngRenderer implements Renderer<Buffer> {
           continue;
         }
 
-        const assetPath = request.theme.pieces[pieceKey].source;
         const raster = await getPieceRaster(
           request.theme.name,
           pieceKey,
-          assetPath,
+          request.theme.pieces[pieceKey],
           Math.round(geometry.squareSize),
         );
         context.drawImage(

@@ -11,7 +11,7 @@ describe("published package shape", () => {
     expect(existsSync("dist/index.js")).toBe(true);
     expect(existsSync("dist/index.cjs")).toBe(true);
     expect(existsSync("dist/index.d.ts")).toBe(true);
-    expect(existsSync("assets/themes/merida/wK.svg")).toBe(true);
+    expect(existsSync("assets/themes/merida/wK.png")).toBe(true);
     expect(existsSync("README.md")).toBe(true);
     expect(existsSync("ATTRIBUTION.md")).toBe(true);
   });

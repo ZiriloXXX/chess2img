@@ -32,12 +32,19 @@ export interface SvgAssetSource {
   source: string;
 }
 
+export interface PngAssetSource {
+  kind: "png";
+  source: string;
+}
+
+export type ThemeAssetSource = SvgAssetSource | PngAssetSource;
+
 export interface ThemeDefinition {
   name: string;
   displayName: string;
   license: string;
   attribution: string;
-  pieces: Record<PieceKey, SvgAssetSource>;
+  pieces: Record<PieceKey, ThemeAssetSource>;
 }
 
 export interface BoardColors {

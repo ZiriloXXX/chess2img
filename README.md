@@ -170,6 +170,11 @@ Or pass either:
 - a registered custom theme name through `theme: "custom-theme"`
 - an inline `ThemeDefinition` object through `theme: { ... }`
 
+Custom themes may use either:
+
+- `svg` assets
+- `png` assets
+
 ## Error Model
 
 The library exports:
@@ -184,7 +189,7 @@ The library exports:
 
 - `core` parses and validates chess position input into a canonical board model
 - `themes` validates, registers, and resolves built-in or custom themes
-- `render` rasterizes SVG piece assets and renders PNG output through `canvas`
+- `render` rasterizes SVG or PNG theme assets and renders PNG output through `canvas`
 - `api` orchestrates parsing, theme resolution, rendering, and file output
 
 ## Migration From `chess-image-generator`
@@ -206,4 +211,4 @@ The library exports:
 
 ## Asset Attribution
 
-Bundled theme notes live in [ATTRIBUTION.md](/root/Chess2img/ATTRIBUTION.md).
+Bundled built-in themes are derived from the upstream `andyruwruw/chess-image-generator` resource packs and are vendored in-package for deterministic installs. Provenance and licensing notes live in [ATTRIBUTION.md](/root/Chess2img/ATTRIBUTION.md).

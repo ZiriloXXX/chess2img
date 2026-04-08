@@ -35,8 +35,8 @@ export function validateThemeDefinition(theme: ThemeDefinition): ThemeDefinition
   for (const pieceKey of REQUIRED_PIECES) {
     const asset = theme.pieces[pieceKey];
 
-    if (!asset || asset.kind !== "svg" || !asset.source.trim()) {
-      throw new ThemeError(`Theme "${normalizedName}" is missing SVG asset ${pieceKey}`);
+    if (!asset || (asset.kind !== "svg" && asset.kind !== "png") || !asset.source.trim()) {
+      throw new ThemeError(`Theme "${normalizedName}" is missing asset ${pieceKey}`);
     }
   }
 
