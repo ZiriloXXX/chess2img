@@ -1,8 +1,38 @@
 # chess2img
 
-Modern chess board image rendering for Node.js.
+[![npm version](https://img.shields.io/npm/v/chess2img)](https://www.npmjs.com/package/chess2img)
+[![License: MIT](https://img.shields.io/npm/l/chess2img)](https://www.npmjs.com/package/chess2img)
 
-`chess2img` renders PNG chess board images from FEN, PGN, or board-array inputs with a small Promise-based API for both JavaScript and TypeScript users.
+`chess2img` renders PNG chess board images from FEN, PGN, or board-array inputs for Node.js with a small Promise-based API for JavaScript and TypeScript users.
+
+## Quick Start
+
+Install:
+
+```bash
+npm install chess2img
+```
+
+Render a board image:
+
+```ts
+import { writeFile } from "node:fs/promises";
+import { renderChess } from "chess2img";
+
+const png = await renderChess({
+  fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+});
+
+await writeFile("board.png", png);
+```
+
+`renderChess(...)` returns a `Promise<Buffer>` containing PNG data.
+
+## Example Output
+
+Example board rendered with a built-in theme:
+
+![Example board output](https://raw.githubusercontent.com/ZiriloXXX/chess2img/main/tests/fixtures/golden/board-initial-cburnett.png)
 
 ## Installation
 
@@ -17,18 +47,6 @@ npm install chess2img
 - common Linux packages usually include Cairo, Pango, libpng, libjpeg, giflib, a C/C++ toolchain, and Python for `node-gyp`
 
 If `canvas` fails to install, verify your system packages first. The library ships `canvas` as a direct dependency, but native prerequisites still need to exist on the host.
-
-## Quick Start
-
-```ts
-import { renderChess } from "chess2img";
-
-const buffer = await renderChess({
-  fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
-  size: 480,
-  style: "merida",
-});
-```
 
 ## JavaScript Usage
 
@@ -211,4 +229,4 @@ The library exports:
 
 ## Asset Attribution
 
-Bundled built-in themes are derived from the upstream `andyruwruw/chess-image-generator` resource packs and are vendored in-package for deterministic installs. Provenance and licensing notes live in [ATTRIBUTION.md](/root/Chess2img/ATTRIBUTION.md).
+Bundled built-in themes are derived from the upstream `andyruwruw/chess-image-generator` resource packs and are vendored in-package for deterministic installs. Provenance and licensing notes live in [ATTRIBUTION.md](./ATTRIBUTION.md).
