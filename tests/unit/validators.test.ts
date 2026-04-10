@@ -128,7 +128,7 @@ describe("validateHighlightOptions", () => {
     expect(() =>
       validateHighlightOptions([
         { square: "e4" },
-        { square: "d5", style: "circle", color: "#ffcc00", opacity: 0.5, lineWidth: 4 },
+        { square: "d5", style: "circle", color: "#ffcc00", opacity: 0.5, lineWidth: 4, radius: 0.45 },
       ]),
     ).not.toThrow();
   });
@@ -142,6 +142,12 @@ describe("validateHighlightOptions", () => {
       ValidationError,
     );
     expect(() => validateHighlightOptions([{ square: "e4", lineWidth: 0 }])).toThrow(
+      ValidationError,
+    );
+    expect(() => validateHighlightOptions([{ square: "e4", style: "circle", radius: -0.1 }])).toThrow(
+      ValidationError,
+    );
+    expect(() => validateHighlightOptions([{ square: "e4", style: "circle", radius: 0.6 }])).toThrow(
       ValidationError,
     );
     expect(() => validateHighlightOptions([{ color: "#ffcc00" } as never])).toThrow(

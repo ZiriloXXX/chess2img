@@ -321,6 +321,23 @@ describe("CanvasPngRenderer", () => {
     expect(thin.equals(thick)).toBe(false);
   });
 
+  it("applies radius differences to circle highlight rendering", async () => {
+    const small = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: [{ square: "e4", style: "circle", radius: 0.3 }],
+    });
+    const large = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: [{ square: "e4", style: "circle", radius: 0.5 }],
+    });
+
+    expect(small.equals(large)).toBe(false);
+  });
+
   it("rejects invalid circle highlight line widths", async () => {
     await expect(
       renderChess({
@@ -328,6 +345,26 @@ describe("CanvasPngRenderer", () => {
         size: 400,
         style: "cburnett",
         highlights: [{ square: "e4", style: "circle", lineWidth: 0 }],
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it("rejects invalid circle highlight radii", async () => {
+    await expect(
+      renderChess({
+        fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+        size: 400,
+        style: "cburnett",
+        highlights: [{ square: "e4", style: "circle", radius: 0 }],
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+
+    await expect(
+      renderChess({
+        fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+        size: 400,
+        style: "cburnett",
+        highlights: [{ square: "e4", style: "circle", radius: 0.6 }],
       }),
     ).rejects.toBeInstanceOf(ValidationError);
   });

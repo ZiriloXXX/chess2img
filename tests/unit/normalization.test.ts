@@ -51,7 +51,15 @@ describe("normalizeRenderInputs", () => {
 
   it("normalizes circle highlights with circle defaults", () => {
     expect(normalizeHighlightEntries([{ square: "e4", style: "circle" }])).toEqual([
-      { square: "e4", style: "circle", color: "#ffcc00", opacity: 0.9, lineWidth: undefined },
+      { square: "e4", style: "circle", color: "#ffcc00", opacity: 0.9, lineWidth: undefined, radius: 0.42 },
+    ]);
+  });
+
+  it("preserves a custom circle radius", () => {
+    expect(
+      normalizeHighlightEntries([{ square: "e4", style: "circle", radius: 0.45 }]),
+    ).toEqual([
+      { square: "e4", style: "circle", color: "#ffcc00", opacity: 0.9, lineWidth: undefined, radius: 0.45 },
     ]);
   });
 
@@ -64,7 +72,7 @@ describe("normalizeRenderInputs", () => {
       }).highlights,
     ).toEqual([
       { square: "e4", style: "fill", color: undefined, opacity: undefined, lineWidth: undefined },
-      { square: "e4", style: "circle", color: "#ffcc00", opacity: 0.9, lineWidth: undefined },
+      { square: "e4", style: "circle", color: "#ffcc00", opacity: 0.9, lineWidth: undefined, radius: 0.42 },
     ]);
     expect(
       normalizeRenderInputs({

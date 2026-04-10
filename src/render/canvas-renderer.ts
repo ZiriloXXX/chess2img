@@ -69,6 +69,15 @@ function resolveCircleLineWidth(squareSize: number, lineWidth: number | undefine
   return Math.max(2, Math.min(8, candidate));
 }
 
+function resolveCircleRadius(
+  squareSize: number,
+  radius: number | undefined,
+  lineWidth: number,
+) {
+  const radiusPx = squareSize * (radius ?? 0.42);
+  return Math.max(0, radiusPx - lineWidth / 2);
+}
+
 function resolveBorderCoordinateFontSize(
   context: ReturnType<typeof createCanvas>["getContext"],
   geometry: ReturnType<typeof createBoardGeometry>,
@@ -294,11 +303,16 @@ function drawCircleHighlights(
       squareGeometry.size,
       highlight.lineWidth,
     );
+    const radius = resolveCircleRadius(
+      squareGeometry.size,
+      highlight.radius,
+      context.lineWidth,
+    );
     context.beginPath();
     context.arc(
       centerX,
       centerY,
-      squareGeometry.size * 0.32,
+      radius,
       0,
       Math.PI * 2,
     );

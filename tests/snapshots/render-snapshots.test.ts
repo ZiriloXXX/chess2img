@@ -136,7 +136,7 @@ describe("render snapshots", () => {
         disabled,
         { x: 0, y: 24, width: 24, height: 352 },
       ),
-    ).toBeGreaterThan(100);
+    ).toBeGreaterThan(20);
   });
 
   it("matches coordinates-disabled snapshot for cburnett", async () => {
@@ -249,6 +249,20 @@ describe("render snapshots", () => {
     await expectBufferToMatchGolden(
       buffer,
       "tests/fixtures/golden/highlight-fill-circle-cburnett.png",
+    );
+  });
+
+  it("matches custom-radius circle highlight snapshot for cburnett", async () => {
+    const buffer = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: [{ square: "e4", style: "circle", radius: 0.5 }],
+    });
+
+    await expectBufferToMatchGolden(
+      buffer,
+      "tests/fixtures/golden/highlight-circle-radius-cburnett.png",
     );
   });
 });

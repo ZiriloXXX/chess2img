@@ -264,6 +264,13 @@ function validateHighlightEntry(entry: HighlightInput): void {
   ) {
     throw new ValidationError("highlight.lineWidth must be a finite number greater than 0");
   }
+
+  if (
+    entry.radius !== undefined &&
+    (!Number.isFinite(entry.radius) || entry.radius <= 0 || entry.radius > 0.5)
+  ) {
+    throw new ValidationError("highlight.radius must be a finite number greater than 0 and at most 0.5");
+  }
 }
 
 export function validateHighlightOptions(highlights: HighlightInput[] | undefined): void {

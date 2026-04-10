@@ -61,6 +61,7 @@ export interface HighlightOptions {
   color?: string;
   opacity?: number;
   lineWidth?: number;
+  radius?: number;
 }
 
 export type HighlightInput = string | HighlightOptions;
@@ -71,6 +72,7 @@ export interface ResolvedHighlight {
   color?: string;
   opacity?: number;
   lineWidth?: number;
+  radius?: number;
 }
 
 export type CoordinatesPosition = "border" | "inside";
