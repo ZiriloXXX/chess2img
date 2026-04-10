@@ -6,6 +6,9 @@ import type {
   CoordinatesInput,
   CoordinatesOptions,
   CoordinatesPosition,
+  HighlightInput,
+  HighlightOptions,
+  HighlightStyle,
   Padding,
   Square,
 } from "../types/types";
@@ -163,6 +166,14 @@ function isCoordinatesPosition(value: unknown): value is CoordinatesPosition {
   return value === "border" || value === "inside";
 }
 
+function isHighlightOptions(value: unknown): value is HighlightOptions {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isHighlightStyle(value: unknown): value is HighlightStyle {
+  return value === "fill" || value === "circle";
+}
+
 export function validateCoordinatesOption(
   coordinates: CoordinatesInput | undefined,
   borderSize: number,
@@ -214,4 +225,69 @@ export function validateCoordinatesOption(
   if (coordinates.color !== undefined) {
     validateColorString(coordinates.color, "coordinates.color");
   }
+}
+
+function validateHighlightEntry(entry: HighlightInput): void {
+  if (typeof entry === "string") {
+    validateSquare(entry);
+    return;
+  }
+
+  if (!isHighlightOptions(entry)) {
+    throw new ValidationError("highlights entries must be square strings or highlight objects");
+  }
+
+  if (typeof entry.square !== "string") {
+    throw new ValidationError("highlight.square must be a valid algebraic square");
+  }
+
+  validateSquare(entry.square);
+
+  if (entry.style !== undefined && !isHighlightStyle(entry.style)) {
+    throw new ValidationError("highlight.style must be 'fill' or 'circle'");
+  }
+
+  if (entry.color !== undefined) {
+    validateColorString(entry.color, "highlight.color");
+  }
+
+  if (
+    entry.opacity !== undefined &&
+    (!Number.isFinite(entry.opacity) || entry.opacity < 0 || entry.opacity > 1)
+  ) {
+    throw new ValidationError("highlight.opacity must be a finite number between 0 and 1");
+  }
+
+  if (
+    entry.lineWidth !== undefined &&
+    (!Number.isFinite(entry.lineWidth) || entry.lineWidth <= 0)
+  ) {
+    throw new ValidationError("highlight.lineWidth must be a finite number greater than 0");
+  }
+}
+
+export function validateHighlightOptions(highlights: HighlightInput[] | undefined): void {
+  if (highlights === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(highlights)) {
+    throw new ValidationError("highlights must be an array");
+  }
+
+  for (const entry of highlights) {
+    validateHighlightEntry(entry);
+  }
+}
+
+export function validateHighlightsInput(
+  highlights: HighlightInput[] | undefined,
+  highlightSquares: HighlightInput[] | undefined,
+): void {
+  if (highlights !== undefined && highlightSquares !== undefined) {
+    throw new ValidationError("Use either highlights or highlightSquares, not both");
+  }
+
+  validateHighlightOptions(highlights);
+  validateHighlightOptions(highlightSquares);
 }

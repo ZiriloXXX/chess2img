@@ -3,14 +3,14 @@ import type {
   Padding,
   ResolvedColors,
   ResolvedCoordinates,
-  Square,
+  ResolvedHighlight,
   ThemeDefinition,
 } from "../types/types";
 
 export interface RenderRequest {
   board: BoardPosition;
   theme: ThemeDefinition;
-  highlights: Square[];
+  highlights: ResolvedHighlight[];
   size: number;
   padding: Padding;
   borderSize: number;

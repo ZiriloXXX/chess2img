@@ -1,22 +1,23 @@
 import type {
   BoardColors,
   CoordinatesInput,
-  CoordinatesOptions,
   CoordinatesPosition,
+  HighlightInput,
   Padding,
   RenderOptions,
   ResolvedColors,
   ResolvedCoordinates,
+  ResolvedHighlight,
   ResolvedRenderOptions,
-  Square,
   ThemeDefinition,
 } from "../types/types";
-import { normalizeHighlights } from "../core/highlights";
+import { normalizeHighlightEntries as normalizeCanonicalHighlightEntries } from "../core/highlights";
 import {
   normalizePadding,
   validateBoardColors,
   validateBorderSize,
   validateCoordinatesOption,
+  validateHighlightsInput,
   validateSize,
 } from "../core/validators";
 import { resolveTheme } from "../themes/resolver";
@@ -78,8 +79,14 @@ export function normalizeCoordinates(
   };
 }
 
+export function normalizeHighlightEntries(
+  highlights: HighlightInput[] | undefined,
+): ResolvedHighlight[] {
+  return normalizeCanonicalHighlightEntries(highlights ?? []);
+}
+
 export function normalizeRenderInputs(
-  options: RenderOptions & { highlightSquares?: Square[] },
+  options: RenderOptions,
 ): ResolvedRenderOptions {
   const size = validateSize(options.size ?? DEFAULT_SIZE);
   const borderSize = validateBorderSize(
@@ -88,6 +95,8 @@ export function normalizeRenderInputs(
   );
   validateBoardColors(options.colors);
   validateCoordinatesOption(options.coordinates, borderSize);
+  validateHighlightsInput(options.highlights, options.highlightSquares);
+  const highlightInput = options.highlights ?? options.highlightSquares;
 
   return {
     size,
@@ -98,7 +107,7 @@ export function normalizeRenderInputs(
       theme: options.theme,
       style: options.style,
     }),
-    highlightSquares: normalizeHighlights(options.highlightSquares ?? []),
+    highlights: normalizeHighlightEntries(highlightInput),
     colors: normalizeColors(options.colors),
     coordinates: normalizeCoordinates(options.coordinates, borderSize),
   };

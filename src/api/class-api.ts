@@ -1,9 +1,10 @@
 import { parseBoardArray, parseFEN, parsePGN } from "../core/parsers";
-import { normalizeHighlights } from "../core/highlights";
+import { validateHighlightsInput } from "../core/validators";
 import { ValidationError } from "../types/errors";
 import type {
   BoardArray,
   ChessImageGeneratorOptions,
+  HighlightInput,
   RenderOptions,
 } from "../types/types";
 import { CanvasPngRenderer } from "../render/canvas-renderer";
@@ -16,14 +17,11 @@ export class ChessImageGenerator {
 
   private readonly defaults: RenderOptions;
 
-  private highlights: string[] = [];
+  private highlights: HighlightInput[] = [];
 
   constructor(options: ChessImageGeneratorOptions = {}) {
     this.defaults = { ...options };
-    normalizeRenderInputs({
-      ...this.defaults,
-      highlightSquares: [],
-    });
+    normalizeRenderInputs(this.defaults);
   }
 
   async loadFEN(fen: string): Promise<void> {
@@ -41,8 +39,9 @@ export class ChessImageGenerator {
     this.clearHighlights();
   }
 
-  setHighlights(squares: string[]): void {
-    this.highlights = normalizeHighlights(squares);
+  setHighlights(highlights: HighlightInput[]): void {
+    validateHighlightsInput(highlights, undefined);
+    this.highlights = [...highlights];
   }
 
   clearHighlights(): void {
@@ -57,13 +56,14 @@ export class ChessImageGenerator {
     const renderer = new CanvasPngRenderer();
     const normalized = normalizeRenderInputs({
       ...this.defaults,
-      highlightSquares: this.highlights,
+      highlights: this.highlights,
+      highlightSquares: undefined,
     });
 
     return renderer.render({
       board: this.position,
       theme: normalized.theme,
-      highlights: normalized.highlightSquares,
+      highlights: normalized.highlights,
       size: normalized.size,
       padding: normalized.padding,
       borderSize: normalized.borderSize,

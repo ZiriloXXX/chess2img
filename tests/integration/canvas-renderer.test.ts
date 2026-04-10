@@ -229,6 +229,109 @@ describe("CanvasPngRenderer", () => {
     expect(disabled.equals(omitted)).toBe(true);
   });
 
+  it("renders canonical fill highlights from the new highlights API", async () => {
+    const filled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: ["e4"],
+    });
+    const legacy = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlightSquares: ["e4"],
+    });
+    const disabled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: [],
+    });
+
+    expect(filled.equals(legacy)).toBe(true);
+    expect(filled.equals(disabled)).toBe(false);
+  });
+
+  it("renders circle highlights", async () => {
+    const circled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: [{ square: "e4", style: "circle" }],
+    });
+    const disabled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: [],
+    });
+
+    expect(circled.equals(disabled)).toBe(false);
+  });
+
+  it("renders fill and circle highlights together on the same square", async () => {
+    const combined = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: ["e4", { square: "e4", style: "circle" }],
+    });
+    const fillOnly = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: ["e4"],
+    });
+
+    expect(combined.equals(fillOnly)).toBe(false);
+  });
+
+  it("applies opacity differences to highlight rendering", async () => {
+    const faint = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: [{ square: "e4", opacity: 0.2 }],
+    });
+    const strong = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: [{ square: "e4", opacity: 1 }],
+    });
+
+    expect(faint.equals(strong)).toBe(false);
+  });
+
+  it("applies line width differences to circle highlight rendering", async () => {
+    const thin = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: [{ square: "e4", style: "circle", lineWidth: 2 }],
+    });
+    const thick = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      highlights: [{ square: "e4", style: "circle", lineWidth: 8 }],
+    });
+
+    expect(thin.equals(thick)).toBe(false);
+  });
+
+  it("rejects invalid circle highlight line widths", async () => {
+    await expect(
+      renderChess({
+        fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+        size: 400,
+        style: "cburnett",
+        highlights: [{ square: "e4", style: "circle", lineWidth: 0 }],
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
   it("renders explicit inside coordinates without requiring a border", async () => {
     const inside = await renderChess({
       fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",

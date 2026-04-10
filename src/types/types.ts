@@ -53,6 +53,26 @@ export interface BoardColors {
   highlight?: string;
 }
 
+export type HighlightStyle = "fill" | "circle";
+
+export interface HighlightOptions {
+  square: string;
+  style?: HighlightStyle;
+  color?: string;
+  opacity?: number;
+  lineWidth?: number;
+}
+
+export type HighlightInput = string | HighlightOptions;
+
+export interface ResolvedHighlight {
+  square: Square;
+  style: HighlightStyle;
+  color?: string;
+  opacity?: number;
+  lineWidth?: number;
+}
+
 export type CoordinatesPosition = "border" | "inside";
 
 export interface CoordinatesOptions {
@@ -73,7 +93,8 @@ export interface RenderOptions {
   flipped?: boolean;
   style?: PieceStyle;
   theme?: string | ThemeDefinition;
-  highlightSquares?: Square[];
+  highlights?: HighlightInput[];
+  highlightSquares?: HighlightInput[];
   colors?: BoardColors;
   coordinates?: CoordinatesInput;
 }
@@ -98,7 +119,7 @@ export interface ResolvedRenderOptions {
   borderSize: number;
   flipped: boolean;
   theme: ThemeDefinition;
-  highlightSquares: Square[];
+  highlights: ResolvedHighlight[];
   colors: ResolvedColors;
   coordinates: ResolvedCoordinates;
 }

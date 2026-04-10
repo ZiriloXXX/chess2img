@@ -51,6 +51,24 @@ function resolveInsideLabelColor(
   return isDarkSquare(square) ? INSIDE_LIGHT_LABEL_COLOR : INSIDE_DARK_LABEL_COLOR;
 }
 
+function resolveHighlightOpacity(style: "fill" | "circle", color: string | undefined, opacity: number | undefined) {
+  if (opacity !== undefined) {
+    return opacity;
+  }
+
+  if (style === "circle" || color !== undefined) {
+    return 0.9;
+  }
+
+  // Preserve legacy fill behavior when the board highlight color is used directly.
+  return 1;
+}
+
+function resolveCircleLineWidth(squareSize: number, lineWidth: number | undefined) {
+  const candidate = lineWidth ?? squareSize * 0.08;
+  return Math.max(2, Math.min(8, candidate));
+}
+
 function resolveBorderCoordinateFontSize(
   context: ReturnType<typeof createCanvas>["getContext"],
   geometry: ReturnType<typeof createBoardGeometry>,
@@ -205,6 +223,118 @@ function drawCoordinates(
   drawInsideCoordinates(context, request, geometry);
 }
 
+function drawBoardSquares(
+  context: ReturnType<typeof createCanvas>["getContext"],
+  request: RenderRequest,
+  geometry: ReturnType<typeof createBoardGeometry>,
+) {
+  for (const square of SQUARES) {
+    const squareGeometry = geometry.squares[square];
+    context.fillStyle = isDarkSquare(square)
+      ? request.colors.darkSquare
+      : request.colors.lightSquare;
+    context.fillRect(
+      squareGeometry.x,
+      squareGeometry.y,
+      squareGeometry.size,
+      squareGeometry.size,
+    );
+  }
+}
+
+function drawFillHighlights(
+  context: ReturnType<typeof createCanvas>["getContext"],
+  request: RenderRequest,
+  geometry: ReturnType<typeof createBoardGeometry>,
+) {
+  for (const highlight of request.highlights) {
+    if (highlight.style !== "fill") {
+      continue;
+    }
+
+    const squareGeometry = geometry.squares[highlight.square];
+    context.save();
+    context.globalAlpha = resolveHighlightOpacity(
+      highlight.style,
+      highlight.color,
+      highlight.opacity,
+    );
+    context.fillStyle = highlight.color ?? request.colors.highlight;
+    context.fillRect(
+      squareGeometry.x,
+      squareGeometry.y,
+      squareGeometry.size,
+      squareGeometry.size,
+    );
+    context.restore();
+  }
+}
+
+function drawCircleHighlights(
+  context: ReturnType<typeof createCanvas>["getContext"],
+  request: RenderRequest,
+  geometry: ReturnType<typeof createBoardGeometry>,
+) {
+  for (const highlight of request.highlights) {
+    if (highlight.style !== "circle") {
+      continue;
+    }
+
+    const squareGeometry = geometry.squares[highlight.square];
+    const centerX = squareGeometry.x + squareGeometry.size / 2;
+    const centerY = squareGeometry.y + squareGeometry.size / 2;
+    context.save();
+    context.globalAlpha = resolveHighlightOpacity(
+      highlight.style,
+      highlight.color,
+      highlight.opacity,
+    );
+    context.strokeStyle = highlight.color ?? "#ffcc00";
+    context.lineWidth = resolveCircleLineWidth(
+      squareGeometry.size,
+      highlight.lineWidth,
+    );
+    context.beginPath();
+    context.arc(
+      centerX,
+      centerY,
+      squareGeometry.size * 0.32,
+      0,
+      Math.PI * 2,
+    );
+    context.stroke();
+    context.restore();
+  }
+}
+
+async function drawPieces(
+  context: ReturnType<typeof createCanvas>["getContext"],
+  request: RenderRequest,
+  geometry: ReturnType<typeof createBoardGeometry>,
+) {
+  for (const square of SQUARES) {
+    const squareGeometry = geometry.squares[square];
+    const pieceKey = request.board.squares[square];
+    if (!pieceKey) {
+      continue;
+    }
+
+    const raster = await getPieceRaster(
+      request.theme.name,
+      pieceKey,
+      request.theme.pieces[pieceKey],
+      Math.round(geometry.squareSize),
+    );
+    context.drawImage(
+      raster,
+      squareGeometry.x,
+      squareGeometry.y,
+      squareGeometry.size,
+      squareGeometry.size,
+    );
+  }
+}
+
 export class CanvasPngRenderer implements Renderer<Buffer> {
   async render(request: RenderRequest): Promise<Buffer> {
     try {
@@ -220,50 +350,11 @@ export class CanvasPngRenderer implements Renderer<Buffer> {
 
       context.fillStyle = request.colors.lightSquare;
       context.fillRect(0, 0, geometry.imageWidth, geometry.imageHeight);
-
-      for (const square of SQUARES) {
-        const squareGeometry = geometry.squares[square];
-        context.fillStyle = isDarkSquare(square)
-          ? request.colors.darkSquare
-          : request.colors.lightSquare;
-        context.fillRect(
-          squareGeometry.x,
-          squareGeometry.y,
-          squareGeometry.size,
-          squareGeometry.size,
-        );
-
-        if (request.highlights.includes(square)) {
-          context.fillStyle = request.colors.highlight;
-          context.fillRect(
-            squareGeometry.x,
-            squareGeometry.y,
-            squareGeometry.size,
-            squareGeometry.size,
-          );
-        }
-
-        const pieceKey = request.board.squares[square];
-        if (!pieceKey) {
-          continue;
-        }
-
-        const raster = await getPieceRaster(
-          request.theme.name,
-          pieceKey,
-          request.theme.pieces[pieceKey],
-          Math.round(geometry.squareSize),
-        );
-        context.drawImage(
-          raster,
-          squareGeometry.x,
-          squareGeometry.y,
-          squareGeometry.size,
-          squareGeometry.size,
-        );
-      }
-
+      drawBoardSquares(context, request, geometry);
+      drawFillHighlights(context, request, geometry);
+      drawCircleHighlights(context, request, geometry);
       drawCoordinates(context, request, geometry);
+      await drawPieces(context, request, geometry);
 
       return canvas.toBuffer("image/png");
     } catch (error) {

@@ -50,7 +50,7 @@ const png = await renderChess({
     darkSquare: "#769656",
     highlight: "rgba(246, 246, 105, 0.6)",
   },
-  highlightSquares: ["e2", "e4"],
+  highlights: ["e2", "e4"],
 });
 
 await writeFile("board.png", png);
@@ -142,6 +142,38 @@ const png = await renderChess({
 });
 
 await writeFile("board-with-inside-coordinates.png", png);
+```
+
+### Circle Highlights
+
+```ts
+import { writeFile } from "node:fs/promises";
+import { renderChess } from "chess2img";
+
+const png = await renderChess({
+  fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+  size: 480,
+  style: "cburnett",
+  highlights: [{ square: "e4", style: "circle" }],
+});
+
+await writeFile("board-with-circle-highlight.png", png);
+```
+
+### Combined Fill And Circle Highlights
+
+```ts
+import { writeFile } from "node:fs/promises";
+import { renderChess } from "chess2img";
+
+const png = await renderChess({
+  fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+  size: 480,
+  style: "cburnett",
+  highlights: ["e4", { square: "e4", style: "circle" }],
+});
+
+await writeFile("board-with-fill-and-circle-highlights.png", png);
 ```
 
 ### Class API
@@ -241,7 +273,7 @@ Methods:
 - `loadFEN(fen: string): Promise<void>`
 - `loadPGN(pgn: string): Promise<void>`
 - `loadBoard(board: BoardArray): Promise<void>`
-- `setHighlights(squares: Square[]): void`
+- `setHighlights(highlights: HighlightInput[]): void`
 - `clearHighlights(): void`
 - `toBuffer(): Promise<Buffer>`
 - `toFile(filePath: string): Promise<void>`
@@ -261,13 +293,16 @@ Semantics:
 - `flipped`: render from black's perspective when `true`
 - `style`: built-in theme alias
 - `theme`: built-in theme name, registered custom theme name, or inline `ThemeDefinition`
-- `highlightSquares`: array of algebraic squares such as `["e4", "d5"]`
+- `highlights`: array of square strings or highlight objects such as `["e4", { square: "d5", style: "circle" }]`
+- `highlightSquares`: compatibility alias for `highlights`
 - `coordinates`: `boolean`, `"border"`, `"inside"`, or `{ enabled?: boolean; position?: "border" | "inside"; color?: string }`
 - `colors.lightSquare`
 - `colors.darkSquare`
 - `colors.highlight`
 
 `coordinates: false` or omitting the option disables labels. `coordinates: true` enables labels and chooses `border` mode when `borderSize > 0`, otherwise `inside` mode. Explicit `coordinates: "inside"` is always valid. Explicit `coordinates: "border"` requires `borderSize > 0` and throws `ValidationError` otherwise.
+
+`highlights` is the preferred API. Each entry may be a square string for a filled highlight, or an object with `square`, `style`, `color`, `opacity`, and `lineWidth`. `highlightSquares` remains available for backward compatibility, but should not be used together with `highlights` in the same call.
 
 Inside coordinates use automatic light/dark contrast by default, similar to chess.com. If `coordinates.color` is provided, that exact color is used instead. Border coordinates keep a single-color label style with `#333` as the default.
 

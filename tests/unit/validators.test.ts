@@ -6,6 +6,8 @@ import {
   validateBoardArray,
   validateCoordinatesOption,
   validateColorString,
+  validateHighlightOptions,
+  validateHighlightsInput,
   validateSize,
   validateSquare,
 } from "../../src/core/validators";
@@ -117,6 +119,45 @@ describe("validateCoordinatesOption", () => {
     expect(
       () => validateCoordinatesOption({ position: "border" }, 0),
     ).toThrow(ValidationError);
+  });
+});
+
+describe("validateHighlightOptions", () => {
+  it("accepts square strings and valid object highlights", () => {
+    expect(() => validateHighlightOptions(["e4"])).not.toThrow();
+    expect(() =>
+      validateHighlightOptions([
+        { square: "e4" },
+        { square: "d5", style: "circle", color: "#ffcc00", opacity: 0.5, lineWidth: 4 },
+      ]),
+    ).not.toThrow();
+  });
+
+  it("rejects malformed highlight entries", () => {
+    expect(() => validateHighlightOptions(["z9"])).toThrow(ValidationError);
+    expect(() => validateHighlightOptions([{ square: "e4", style: "ring" } as never])).toThrow(
+      ValidationError,
+    );
+    expect(() => validateHighlightOptions([{ square: "e4", opacity: 1.5 }])).toThrow(
+      ValidationError,
+    );
+    expect(() => validateHighlightOptions([{ square: "e4", lineWidth: 0 }])).toThrow(
+      ValidationError,
+    );
+    expect(() => validateHighlightOptions([{ color: "#ffcc00" } as never])).toThrow(
+      ValidationError,
+    );
+  });
+});
+
+describe("validateHighlightsInput", () => {
+  it("accepts either highlights or highlightSquares individually", () => {
+    expect(() => validateHighlightsInput(["e4"], undefined)).not.toThrow();
+    expect(() => validateHighlightsInput(undefined, ["e4"])).not.toThrow();
+  });
+
+  it("rejects using highlights and highlightSquares together", () => {
+    expect(() => validateHighlightsInput(["e4"], ["d5"])).toThrow(ValidationError);
   });
 });
 

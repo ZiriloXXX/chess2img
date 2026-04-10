@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { normalizeCoordinates, normalizeRenderInputs } from "../../src/utils/normalization";
+import {
+  normalizeCoordinates,
+  normalizeHighlightEntries,
+  normalizeRenderInputs,
+} from "../../src/utils/normalization";
 
 describe("normalizeCoordinates", () => {
   it("defaults coordinates: true to border mode when borderSize is present", () => {
@@ -33,6 +37,57 @@ describe("normalizeCoordinates", () => {
 });
 
 describe("normalizeRenderInputs", () => {
+  it("normalizes string and object fill highlights into the same canonical shape", () => {
+    expect(normalizeHighlightEntries(["e4"])).toEqual([
+      { square: "e4", style: "fill", color: undefined, opacity: undefined, lineWidth: undefined },
+    ]);
+    expect(normalizeHighlightEntries([{ square: "e4" }])).toEqual([
+      { square: "e4", style: "fill", color: undefined, opacity: undefined, lineWidth: undefined },
+    ]);
+    expect(normalizeHighlightEntries([{ square: "e4", style: "fill" }])).toEqual([
+      { square: "e4", style: "fill", color: undefined, opacity: undefined, lineWidth: undefined },
+    ]);
+  });
+
+  it("normalizes circle highlights with circle defaults", () => {
+    expect(normalizeHighlightEntries([{ square: "e4", style: "circle" }])).toEqual([
+      { square: "e4", style: "circle", color: "#ffcc00", opacity: 0.9, lineWidth: undefined },
+    ]);
+  });
+
+  it("preserves duplicate highlight entries and alias inputs", () => {
+    expect(
+      normalizeRenderInputs({
+        size: 400,
+        style: "cburnett",
+        highlights: ["e4", { square: "e4", style: "circle" }],
+      }).highlights,
+    ).toEqual([
+      { square: "e4", style: "fill", color: undefined, opacity: undefined, lineWidth: undefined },
+      { square: "e4", style: "circle", color: "#ffcc00", opacity: 0.9, lineWidth: undefined },
+    ]);
+    expect(
+      normalizeRenderInputs({
+        size: 400,
+        style: "cburnett",
+        highlightSquares: ["e4"],
+      }).highlights,
+    ).toEqual([
+      { square: "e4", style: "fill", color: undefined, opacity: undefined, lineWidth: undefined },
+    ]);
+  });
+
+  it("rejects simultaneous highlights and highlightSquares", () => {
+    expect(() =>
+      normalizeRenderInputs({
+        size: 400,
+        style: "cburnett",
+        highlights: ["e4"],
+        highlightSquares: ["d5"],
+      }),
+    ).toThrow();
+  });
+
   it("preserves explicit inside mode", () => {
     expect(
       normalizeRenderInputs({

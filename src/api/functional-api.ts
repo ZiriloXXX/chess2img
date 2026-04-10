@@ -38,7 +38,7 @@ export async function renderChess(options: RenderChessOptions): Promise<Buffer> 
   return renderer.render({
     board: position,
     theme: normalized.theme,
-    highlights: normalized.highlightSquares,
+    highlights: normalized.highlights,
     size: normalized.size,
     padding: normalized.padding,
     borderSize: normalized.borderSize,
