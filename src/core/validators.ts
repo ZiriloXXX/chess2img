@@ -1,9 +1,18 @@
-import type { BoardArray, BoardCell, Padding, Square } from "../types/types";
+import { createCanvas } from "canvas";
+import type {
+  BoardArray,
+  BoardCell,
+  BoardColors,
+  CoordinatesOptions,
+  Padding,
+  Square,
+} from "../types/types";
 import { ValidationError } from "../types/errors";
 
 const SQUARE_PATTERN = /^[a-h][1-8]$/;
 const PIECE_PATTERN = /^[prnbqkPRNBQK]$/;
 const BUILT_IN_THEME_PATTERN = /^(merida|alpha|cburnett|cheq|leipzig)$/;
+const colorValidationContext = createCanvas(1, 1).getContext("2d");
 
 export function validateSize(size: number): number {
   if (!Number.isFinite(size) || size <= 0) {
@@ -86,4 +95,87 @@ export function validateThemeName(name: string): string {
   }
 
   return normalized;
+}
+
+export function validateBorderSize(borderSize: number, size: number): number {
+  const normalizedSize = validateSize(size);
+  const normalizedBorderSize = Math.round(borderSize);
+  const maxBorderSize = Math.floor(normalizedSize / 8);
+
+  if (!Number.isFinite(borderSize) || normalizedBorderSize < 0) {
+    throw new ValidationError(`Invalid borderSize: ${borderSize}`);
+  }
+
+  if (normalizedBorderSize > maxBorderSize) {
+    throw new ValidationError(
+      `Invalid borderSize: ${borderSize}. Maximum allowed for size ${normalizedSize} is ${maxBorderSize}`,
+    );
+  }
+
+  return normalizedBorderSize;
+}
+
+export function validateColorString(color: string, label = "color"): string {
+  if (typeof color !== "string" || color.trim() === "") {
+    throw new ValidationError(`Invalid ${label}: ${String(color)}`);
+  }
+
+  const normalized = color.trim();
+  colorValidationContext.fillStyle = "#010203";
+  colorValidationContext.fillStyle = normalized;
+  const firstPass = String(colorValidationContext.fillStyle);
+  colorValidationContext.fillStyle = "#fefefe";
+  colorValidationContext.fillStyle = normalized;
+  const secondPass = String(colorValidationContext.fillStyle);
+
+  if (firstPass !== secondPass) {
+    throw new ValidationError(`Invalid ${label}: ${color}`);
+  }
+
+  return normalized;
+}
+
+export function validateBoardColors(colors?: BoardColors): void {
+  if (!colors) {
+    return;
+  }
+
+  if (colors.lightSquare !== undefined) {
+    validateColorString(colors.lightSquare, "lightSquare color");
+  }
+
+  if (colors.darkSquare !== undefined) {
+    validateColorString(colors.darkSquare, "darkSquare color");
+  }
+
+  if (colors.highlight !== undefined) {
+    validateColorString(colors.highlight, "highlight color");
+  }
+}
+
+function isCoordinatesOptions(value: unknown): value is CoordinatesOptions {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function validateCoordinatesOption(
+  coordinates?: boolean | CoordinatesOptions,
+): void {
+  if (coordinates === undefined || typeof coordinates === "boolean") {
+    return;
+  }
+
+  if (!isCoordinatesOptions(coordinates)) {
+    throw new ValidationError("coordinates must be a boolean or an options object");
+  }
+
+  if (
+    coordinates.enabled !== undefined &&
+    typeof coordinates.enabled !== "boolean"
+  ) {
+    throw new ValidationError("coordinates.enabled must be a boolean");
+  }
+
+  if (coordinates.color !== undefined) {
+    validateColorString(coordinates.color, "coordinates.color");
+  }
 }

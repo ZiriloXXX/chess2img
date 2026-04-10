@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  validateBoardColors,
+  validateBorderSize,
   normalizePadding,
   validateBoardArray,
+  validateCoordinatesOption,
+  validateColorString,
   validateSize,
   validateSquare,
 } from "../../src/core/validators";
@@ -14,6 +18,20 @@ describe("validateSize", () => {
 
   it("rejects invalid board sizes", () => {
     expect(() => validateSize(0)).toThrow(ValidationError);
+  });
+});
+
+describe("validateBorderSize", () => {
+  it("accepts a border size within the safe range", () => {
+    expect(validateBorderSize(24, 480)).toBe(24);
+  });
+
+  it("rejects negative border sizes", () => {
+    expect(() => validateBorderSize(-1, 480)).toThrow(ValidationError);
+  });
+
+  it("rejects border sizes that exceed the safe maximum", () => {
+    expect(() => validateBorderSize(61, 480)).toThrow(ValidationError);
   });
 });
 
@@ -34,6 +52,62 @@ describe("validateSquare", () => {
 
   it("rejects invalid coordinates", () => {
     expect(() => validateSquare("z9")).toThrow(ValidationError);
+  });
+});
+
+describe("validateColorString", () => {
+  it("accepts CSS color values", () => {
+    expect(validateColorString("#333", "coordinate color")).toBe("#333");
+    expect(validateColorString("rgba(255, 206, 0, 0.45)", "highlight")).toBe(
+      "rgba(255, 206, 0, 0.45)",
+    );
+  });
+
+  it("rejects invalid CSS color values", () => {
+    expect(() => validateColorString("not-a-color", "coordinate color")).toThrow(
+      ValidationError,
+    );
+  });
+});
+
+describe("validateBoardColors", () => {
+  it("accepts board color overrides when all colors are valid", () => {
+    expect(() =>
+      validateBoardColors({
+        lightSquare: "#EEEED2",
+        darkSquare: "#769656",
+        highlight: "rgba(246, 246, 105, 0.6)",
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects invalid board colors", () => {
+    expect(() => validateBoardColors({ lightSquare: "bogus" })).toThrow(
+      ValidationError,
+    );
+  });
+});
+
+describe("validateCoordinatesOption", () => {
+  it("accepts booleans and valid object shapes", () => {
+    expect(() => validateCoordinatesOption(false)).not.toThrow();
+    expect(() => validateCoordinatesOption(true)).not.toThrow();
+    expect(() =>
+      validateCoordinatesOption({
+        enabled: true,
+        color: "#333",
+      }),
+    ).not.toThrow();
+  });
+
+  it("rejects invalid coordinates option shapes", () => {
+    expect(() => validateCoordinatesOption("true" as never)).toThrow(ValidationError);
+    expect(() => validateCoordinatesOption({ enabled: "yes" } as never)).toThrow(
+      ValidationError,
+    );
+    expect(() => validateCoordinatesOption({ color: "bogus" })).toThrow(
+      ValidationError,
+    );
   });
 });
 

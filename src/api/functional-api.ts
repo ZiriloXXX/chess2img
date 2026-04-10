@@ -41,7 +41,9 @@ export async function renderChess(options: RenderChessOptions): Promise<Buffer> 
     highlights: normalized.highlightSquares,
     size: normalized.size,
     padding: normalized.padding,
+    borderSize: normalized.borderSize,
     flipped: normalized.flipped,
     colors: normalized.colors,
+    coordinates: normalized.coordinates,
   });
 }

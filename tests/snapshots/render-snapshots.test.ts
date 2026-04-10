@@ -1,3 +1,4 @@
+import { createCanvas, loadImage } from "canvas";
 import { readFile } from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { ChessImageGenerator, renderChess } from "../../src";
@@ -5,6 +6,37 @@ import { ChessImageGenerator, renderChess } from "../../src";
 async function expectBufferToMatchGolden(buffer: Buffer, goldenPath: string) {
   const expected = await readFile(goldenPath);
   expect(buffer.equals(expected)).toBe(true);
+}
+
+async function countDifferingPixels(
+  leftBuffer: Buffer,
+  rightBuffer: Buffer,
+  area: { x: number; y: number; width: number; height: number },
+) {
+  const leftImage = await loadImage(leftBuffer);
+  const rightImage = await loadImage(rightBuffer);
+  const leftCanvas = createCanvas(leftImage.width, leftImage.height);
+  const rightCanvas = createCanvas(rightImage.width, rightImage.height);
+  const leftContext = leftCanvas.getContext("2d");
+  const rightContext = rightCanvas.getContext("2d");
+  leftContext.drawImage(leftImage, 0, 0);
+  rightContext.drawImage(rightImage, 0, 0);
+  const leftData = leftContext.getImageData(area.x, area.y, area.width, area.height).data;
+  const rightData = rightContext.getImageData(area.x, area.y, area.width, area.height).data;
+  let count = 0;
+
+  for (let index = 0; index < leftData.length; index += 4) {
+    if (
+      leftData[index] !== rightData[index] ||
+      leftData[index + 1] !== rightData[index + 1] ||
+      leftData[index + 2] !== rightData[index + 2] ||
+      leftData[index + 3] !== rightData[index + 3]
+    ) {
+      count += 1;
+    }
+  }
+
+  return count;
 }
 
 describe("render snapshots", () => {
@@ -78,6 +110,105 @@ describe("render snapshots", () => {
     await expectBufferToMatchGolden(
       buffer,
       "tests/fixtures/golden/flipped-leipzig.png",
+    );
+  });
+
+  it("matches coordinates-enabled snapshot for cburnett", async () => {
+    const buffer = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      borderSize: 24,
+      coordinates: true,
+    });
+    const disabled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      borderSize: 24,
+      coordinates: false,
+    });
+
+    expect(buffer.equals(disabled)).toBe(false);
+    expect(
+      await countDifferingPixels(
+        buffer,
+        disabled,
+        { x: 0, y: 24, width: 24, height: 44 },
+      ),
+    ).toBeGreaterThan(10);
+  });
+
+  it("matches coordinates-disabled snapshot for cburnett", async () => {
+    const buffer = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      borderSize: 24,
+      coordinates: false,
+    });
+
+    await expectBufferToMatchGolden(
+      buffer,
+      "tests/fixtures/golden/coordinates-disabled-cburnett.png",
+    );
+  });
+
+  it("matches flipped coordinates snapshot for cburnett", async () => {
+    const buffer = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      borderSize: 24,
+      coordinates: {
+        enabled: true,
+        color: "#333",
+      },
+      flipped: true,
+    });
+    const nonFlipped = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      borderSize: 24,
+      coordinates: {
+        enabled: true,
+        color: "#333",
+      },
+      flipped: false,
+    });
+
+    expect(buffer.equals(nonFlipped)).toBe(false);
+    expect(
+      await countDifferingPixels(
+        buffer,
+        nonFlipped,
+        { x: 24, y: 376, width: 44, height: 24 },
+      ),
+    ).toBeGreaterThan(10);
+    expect(
+      await countDifferingPixels(
+        buffer,
+        nonFlipped,
+        { x: 0, y: 24, width: 24, height: 44 },
+      ),
+    ).toBeGreaterThan(10);
+  });
+
+  it("matches bordered board snapshot without breaking piece placement", async () => {
+    const buffer = await renderChess({
+      board: JSON.parse(
+        await readFile("tests/fixtures/board/initial-position.json", "utf8"),
+      ) as string[][],
+      size: 400,
+      style: "merida",
+      borderSize: 24,
+      coordinates: false,
+    });
+
+    await expectBufferToMatchGolden(
+      buffer,
+      "tests/fixtures/golden/bordered-initial-merida.png",
     );
   });
 });

@@ -53,14 +53,21 @@ export interface BoardColors {
   highlight?: string;
 }
 
+export interface CoordinatesOptions {
+  enabled?: boolean;
+  color?: string;
+}
+
 export interface RenderOptions {
   size?: number;
   padding?: Padding;
+  borderSize?: number;
   flipped?: boolean;
   style?: PieceStyle;
   theme?: string | ThemeDefinition;
   highlightSquares?: Square[];
   colors?: BoardColors;
+  coordinates?: boolean | CoordinatesOptions;
 }
 
 export interface ChessImageGeneratorOptions extends RenderOptions {}
@@ -71,13 +78,20 @@ export interface ResolvedColors {
   highlight: string;
 }
 
+export interface ResolvedCoordinates {
+  enabled: boolean;
+  color: string;
+}
+
 export interface ResolvedRenderOptions {
   size: number;
   padding: Padding;
+  borderSize: number;
   flipped: boolean;
   theme: ThemeDefinition;
   highlightSquares: Square[];
   colors: ResolvedColors;
+  coordinates: ResolvedCoordinates;
 }
 
 interface FENRenderInput extends RenderOptions {

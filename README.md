@@ -20,7 +20,7 @@
 - Render PNG chessboard images from `fen`, `pgn`, or `board` input.
 - Use five bundled built-in themes: `merida`, `alpha`, `cburnett`, `cheq`, and `leipzig`.
 - Highlight squares such as the last move or key tactical ideas.
-- Customize board colors, size, padding, and board orientation.
+- Customize board colors, size, padding, border sizing, coordinates, and board orientation.
 - Use either the functional `renderChess(...)` API or the `ChessImageGenerator` class API.
 - Register custom themes globally or pass a theme inline for one-off rendering.
 - Consume the package from both JavaScript and TypeScript projects.
@@ -87,6 +87,26 @@ const png = await renderChess({
 });
 
 await writeFile("board.png", png);
+```
+
+### Coordinates And Border
+
+```ts
+import { writeFile } from "node:fs/promises";
+import { renderChess } from "chess2img";
+
+const png = await renderChess({
+  fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+  size: 480,
+  style: "cburnett",
+  borderSize: 24,
+  coordinates: {
+    enabled: true,
+    color: "#333",
+  },
+});
+
+await writeFile("board-with-coordinates.png", png);
 ```
 
 ### Class API
@@ -202,13 +222,17 @@ Semantics:
 
 - `size`: board size in pixels
 - `padding`: `[top, right, bottom, left]`
+- `borderSize`: inner border size in pixels, from `0` up to `Math.floor(size / 8)`
 - `flipped`: render from black's perspective when `true`
 - `style`: built-in theme alias
 - `theme`: built-in theme name, registered custom theme name, or inline `ThemeDefinition`
 - `highlightSquares`: array of algebraic squares such as `["e4", "d5"]`
+- `coordinates`: `boolean` or `{ enabled?: boolean; color?: string }`
 - `colors.lightSquare`
 - `colors.darkSquare`
 - `colors.highlight`
+
+`coordinates: true` enables default coordinate labels. `coordinates: false` or omitting the option disables them. If coordinates are enabled while `borderSize` is `0`, rendering still succeeds but no labels are visible because no border band exists for them. At very small valid sizes, the renderer suppresses coordinates when they cannot fit legibly inside the available border bands.
 
 ### Errors
 
