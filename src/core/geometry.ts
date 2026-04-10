@@ -12,7 +12,7 @@ export interface CoordinateLabelGeometry {
   x: number;
   y: number;
   square: Square;
-  textAlign: "left" | "center";
+  textAlign: "left" | "center" | "right";
   textBaseline: "top" | "middle" | "bottom";
 }
 
@@ -110,10 +110,10 @@ export function createBoardGeometry({
 
     return {
       text: file,
-      x: squareGeometry.x + insideFileInsetX,
+      x: squareGeometry.x + squareGeometry.size - insideFileInsetX,
       y: squareGeometry.y + squareGeometry.size - insideFileInsetY,
       square,
-      textAlign: "left" as const,
+      textAlign: "right" as const,
       textBaseline: "bottom" as const,
     };
   });

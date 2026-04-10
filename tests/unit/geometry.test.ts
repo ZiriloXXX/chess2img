@@ -169,12 +169,20 @@ describe("createBoardGeometry", () => {
 
     expect(nonFlippedBottomLeftFile.square).toBe("a1");
     expect(nonFlippedBottomLeftRank.square).toBe("a1");
-    expect(nonFlippedBottomLeftFile.x).toBe(nonFlippedBottomLeftRank.x);
+    expect(nonFlippedBottomLeftFile.textAlign).toBe("right");
+    expect(nonFlippedBottomLeftFile.textBaseline).toBe("bottom");
+    expect(nonFlippedBottomLeftRank.textAlign).toBe("left");
+    expect(nonFlippedBottomLeftRank.textBaseline).toBe("top");
+    expect(nonFlippedBottomLeftFile.x).toBeGreaterThan(nonFlippedBottomLeftRank.x);
     expect(nonFlippedBottomLeftFile.y).toBeGreaterThan(nonFlippedBottomLeftRank.y);
 
     expect(flippedBottomLeftFile.square).toBe("h8");
     expect(flippedBottomLeftRank.square).toBe("h8");
-    expect(flippedBottomLeftFile.x).toBe(flippedBottomLeftRank.x);
+    expect(flippedBottomLeftFile.textAlign).toBe("right");
+    expect(flippedBottomLeftFile.textBaseline).toBe("bottom");
+    expect(flippedBottomLeftRank.textAlign).toBe("left");
+    expect(flippedBottomLeftRank.textBaseline).toBe("top");
+    expect(flippedBottomLeftFile.x).toBeGreaterThan(flippedBottomLeftRank.x);
     expect(flippedBottomLeftFile.y).toBeGreaterThan(flippedBottomLeftRank.y);
   });
 });
