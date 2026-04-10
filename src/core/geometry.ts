@@ -11,6 +11,9 @@ export interface CoordinateLabelGeometry {
   text: string;
   x: number;
   y: number;
+  square: Square;
+  textAlign: "left" | "center";
+  textBaseline: "top" | "middle" | "bottom";
 }
 
 export interface BoardGeometry {
@@ -24,8 +27,16 @@ export interface BoardGeometry {
   boardX: number;
   boardY: number;
   boardSize: number;
-  fileLabels: CoordinateLabelGeometry[];
-  rankLabels: CoordinateLabelGeometry[];
+  borderFileLabels: CoordinateLabelGeometry[];
+  borderRankLabels: CoordinateLabelGeometry[];
+  insideFileLabels: CoordinateLabelGeometry[];
+  insideRankLabels: CoordinateLabelGeometry[];
+  insideFileInsetX: number;
+  insideFileInsetY: number;
+  insideRankInsetX: number;
+  insideRankInsetY: number;
+  insideLabelMaxWidth: number;
+  insideLabelMaxHeight: number;
   squares: Record<Square, SquareGeometry>;
 }
 
@@ -65,20 +76,60 @@ export function createBoardGeometry({
 
   const displayedFiles = flipped ? [...FILES].reverse() : [...FILES];
   const displayedRanks = flipped ? [...RANKS].reverse() : [...RANKS];
-  const fileLabels = borderSize
+  const bottomEdgeRank = flipped ? "8" : "1";
+  const leftEdgeFile = flipped ? "h" : "a";
+  const borderFileLabels = borderSize
     ? displayedFiles.map((file, fileIndex) => ({
         text: file,
         x: boardX + fileIndex * squareSize + squareSize / 2,
         y: boardOuterY + boardOuterSize - borderSize / 2,
+        square: `${file}${bottomEdgeRank}` as Square,
+        textAlign: "center" as const,
+        textBaseline: "middle" as const,
       }))
     : [];
-  const rankLabels = borderSize
+  const borderRankLabels = borderSize
     ? displayedRanks.map((rank, rankIndex) => ({
         text: rank,
         x: boardOuterX + borderSize / 2,
         y: boardY + rankIndex * squareSize + squareSize / 2,
+        square: `${leftEdgeFile}${rank}` as Square,
+        textAlign: "center" as const,
+        textBaseline: "middle" as const,
       }))
     : [];
+  const insideFileInsetX = squareSize * 0.14;
+  const insideFileInsetY = squareSize * 0.1;
+  const insideRankInsetX = squareSize * 0.14;
+  const insideRankInsetY = squareSize * 0.1;
+  const insideLabelMaxWidth = squareSize * 0.26;
+  const insideLabelMaxHeight = squareSize * 0.24;
+  const insideFileLabels = displayedFiles.map((file) => {
+    const square = `${file}${bottomEdgeRank}` as Square;
+    const squareGeometry = squares[square];
+
+    return {
+      text: file,
+      x: squareGeometry.x + insideFileInsetX,
+      y: squareGeometry.y + squareGeometry.size - insideFileInsetY,
+      square,
+      textAlign: "left" as const,
+      textBaseline: "bottom" as const,
+    };
+  });
+  const insideRankLabels = displayedRanks.map((rank) => {
+    const square = `${leftEdgeFile}${rank}` as Square;
+    const squareGeometry = squares[square];
+
+    return {
+      text: rank,
+      x: squareGeometry.x + insideRankInsetX,
+      y: squareGeometry.y + insideRankInsetY,
+      square,
+      textAlign: "left" as const,
+      textBaseline: "top" as const,
+    };
+  });
 
   return {
     imageWidth: left + size + right,
@@ -91,8 +142,16 @@ export function createBoardGeometry({
     boardX,
     boardY,
     boardSize,
-    fileLabels,
-    rankLabels,
+    borderFileLabels,
+    borderRankLabels,
+    insideFileLabels,
+    insideRankLabels,
+    insideFileInsetX,
+    insideFileInsetY,
+    insideRankInsetX,
+    insideRankInsetY,
+    insideLabelMaxWidth,
+    insideLabelMaxHeight,
     squares,
   };
 }

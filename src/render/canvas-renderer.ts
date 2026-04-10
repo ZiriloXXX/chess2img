@@ -12,6 +12,9 @@ const MIN_COORDINATE_FONT_SIZE = 8;
 const MAX_FILE_LABEL_WIDTH_RATIO = 0.75;
 const MAX_RANK_LABEL_WIDTH_RATIO = 0.7;
 const MAX_LABEL_HEIGHT_RATIO = 0.7;
+const INSIDE_COORDINATE_MAX_FONT_RATIO = 0.34;
+const INSIDE_LIGHT_LABEL_COLOR = "rgba(255,255,255,0.6)";
+const INSIDE_DARK_LABEL_COLOR = "rgba(0,0,0,0.45)";
 
 function isDarkSquare(square: string): boolean {
   const fileIndex = square.charCodeAt(0) - 97;
@@ -37,15 +40,21 @@ async function getPieceRaster(
   return raster;
 }
 
-function drawCoordinates(
-  context: ReturnType<typeof createCanvas>["getContext"],
+function resolveInsideLabelColor(
   request: RenderRequest,
-  geometry: ReturnType<typeof createBoardGeometry>,
+  square: string,
 ) {
-  if (!request.coordinates.enabled || geometry.borderSize === 0) {
-    return;
+  if (request.coordinates.color) {
+    return request.coordinates.color;
   }
 
+  return isDarkSquare(square) ? INSIDE_LIGHT_LABEL_COLOR : INSIDE_DARK_LABEL_COLOR;
+}
+
+function resolveBorderCoordinateFontSize(
+  context: ReturnType<typeof createCanvas>["getContext"],
+  geometry: ReturnType<typeof createBoardGeometry>,
+) {
   const maxFontSize = Math.floor(
     Math.min(geometry.squareSize * 0.6, geometry.borderSize * 0.65),
   );
@@ -54,7 +63,7 @@ function drawCoordinates(
   for (let candidate = maxFontSize; candidate >= MIN_COORDINATE_FONT_SIZE; candidate -= 1) {
     context.font = `${candidate}px sans-serif`;
 
-    const filesFit = geometry.fileLabels.every((label) => {
+    const filesFit = geometry.borderFileLabels.every((label) => {
       const metrics = context.measureText(label.text);
       const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
@@ -63,7 +72,7 @@ function drawCoordinates(
         textHeight <= geometry.borderSize * MAX_LABEL_HEIGHT_RATIO
       );
     });
-    const ranksFit = geometry.rankLabels.every((label) => {
+    const ranksFit = geometry.borderRankLabels.every((label) => {
       const metrics = context.measureText(label.text);
       const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
@@ -79,22 +88,121 @@ function drawCoordinates(
     }
   }
 
+  return fontSize;
+}
+
+function resolveInsideCoordinateFontSize(
+  context: ReturnType<typeof createCanvas>["getContext"],
+  geometry: ReturnType<typeof createBoardGeometry>,
+) {
+  const maxFontSize = Math.floor(
+    geometry.squareSize * INSIDE_COORDINATE_MAX_FONT_RATIO,
+  );
+  let fontSize: number | null = null;
+
+  for (let candidate = maxFontSize; candidate >= MIN_COORDINATE_FONT_SIZE; candidate -= 1) {
+    context.font = `${candidate}px sans-serif`;
+
+    const filesFit = geometry.insideFileLabels.every((label) => {
+      const metrics = context.measureText(label.text);
+      const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+      return (
+        metrics.width <= geometry.insideLabelMaxWidth &&
+        textHeight <= geometry.insideLabelMaxHeight
+      );
+    });
+    const ranksFit = geometry.insideRankLabels.every((label) => {
+      const metrics = context.measureText(label.text);
+      const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+      return (
+        metrics.width <= geometry.insideLabelMaxWidth &&
+        textHeight <= geometry.insideLabelMaxHeight
+      );
+    });
+
+    if (filesFit && ranksFit) {
+      fontSize = candidate;
+      break;
+    }
+  }
+
+  return fontSize;
+}
+
+function drawBorderCoordinates(
+  context: ReturnType<typeof createCanvas>["getContext"],
+  request: RenderRequest,
+  geometry: ReturnType<typeof createBoardGeometry>,
+) {
+  if (geometry.borderSize === 0) {
+    return;
+  }
+
+  const fontSize = resolveBorderCoordinateFontSize(context, geometry);
+
   if (fontSize === null) {
     return;
   }
 
-  context.fillStyle = request.coordinates.color;
+  context.fillStyle = request.coordinates.color ?? "#333";
   context.font = `${fontSize}px sans-serif`;
   context.textAlign = "center";
   context.textBaseline = "middle";
 
-  for (const label of geometry.fileLabels) {
+  for (const label of geometry.borderFileLabels) {
     context.fillText(label.text, label.x, label.y);
   }
 
-  for (const label of geometry.rankLabels) {
+  for (const label of geometry.borderRankLabels) {
     context.fillText(label.text, label.x, label.y);
   }
+}
+
+function drawInsideCoordinates(
+  context: ReturnType<typeof createCanvas>["getContext"],
+  request: RenderRequest,
+  geometry: ReturnType<typeof createBoardGeometry>,
+) {
+  const fontSize = resolveInsideCoordinateFontSize(context, geometry);
+
+  if (fontSize === null) {
+    return;
+  }
+
+  context.font = `${fontSize}px sans-serif`;
+
+  for (const label of geometry.insideFileLabels) {
+    context.fillStyle = resolveInsideLabelColor(request, label.square);
+    context.textAlign = label.textAlign;
+    context.textBaseline = label.textBaseline;
+    context.fillText(label.text, label.x, label.y);
+  }
+
+  for (const label of geometry.insideRankLabels) {
+    context.fillStyle = resolveInsideLabelColor(request, label.square);
+    context.textAlign = label.textAlign;
+    context.textBaseline = label.textBaseline;
+    context.fillText(label.text, label.x, label.y);
+  }
+}
+
+function drawCoordinates(
+  context: ReturnType<typeof createCanvas>["getContext"],
+  request: RenderRequest,
+  geometry: ReturnType<typeof createBoardGeometry>,
+) {
+  if (!request.coordinates.enabled) {
+    return;
+  }
+
+  if (request.coordinates.position === "border") {
+    drawBorderCoordinates(context, request, geometry);
+    return;
+  }
+
+  drawInsideCoordinates(context, request, geometry);
 }
 
 export class CanvasPngRenderer implements Renderer<Buffer> {

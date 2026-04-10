@@ -3,7 +3,9 @@ import type {
   BoardArray,
   BoardCell,
   BoardColors,
+  CoordinatesInput,
   CoordinatesOptions,
+  CoordinatesPosition,
   Padding,
   Square,
 } from "../types/types";
@@ -157,15 +159,32 @@ function isCoordinatesOptions(value: unknown): value is CoordinatesOptions {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function isCoordinatesPosition(value: unknown): value is CoordinatesPosition {
+  return value === "border" || value === "inside";
+}
+
 export function validateCoordinatesOption(
-  coordinates?: boolean | CoordinatesOptions,
+  coordinates: CoordinatesInput | undefined,
+  borderSize: number,
 ): void {
   if (coordinates === undefined || typeof coordinates === "boolean") {
     return;
   }
 
+  if (isCoordinatesPosition(coordinates)) {
+    if (coordinates === "border" && borderSize === 0) {
+      throw new ValidationError(
+        "coordinates position 'border' requires borderSize > 0",
+      );
+    }
+
+    return;
+  }
+
   if (!isCoordinatesOptions(coordinates)) {
-    throw new ValidationError("coordinates must be a boolean or an options object");
+    throw new ValidationError(
+      "coordinates must be false, true, 'border', 'inside', or an options object",
+    );
   }
 
   if (
@@ -173,6 +192,23 @@ export function validateCoordinatesOption(
     typeof coordinates.enabled !== "boolean"
   ) {
     throw new ValidationError("coordinates.enabled must be a boolean");
+  }
+
+  if (
+    coordinates.position !== undefined &&
+    !isCoordinatesPosition(coordinates.position)
+  ) {
+    throw new ValidationError("coordinates.position must be 'border' or 'inside'");
+  }
+
+  if (
+    coordinates.enabled !== false &&
+    coordinates.position === "border" &&
+    borderSize === 0
+  ) {
+    throw new ValidationError(
+      "coordinates position 'border' requires borderSize > 0",
+    );
   }
 
   if (coordinates.color !== undefined) {

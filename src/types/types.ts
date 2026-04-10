@@ -53,10 +53,18 @@ export interface BoardColors {
   highlight?: string;
 }
 
+export type CoordinatesPosition = "border" | "inside";
+
 export interface CoordinatesOptions {
   enabled?: boolean;
+  position?: CoordinatesPosition;
   color?: string;
 }
+
+export type CoordinatesInput =
+  | boolean
+  | CoordinatesPosition
+  | CoordinatesOptions;
 
 export interface RenderOptions {
   size?: number;
@@ -67,7 +75,7 @@ export interface RenderOptions {
   theme?: string | ThemeDefinition;
   highlightSquares?: Square[];
   colors?: BoardColors;
-  coordinates?: boolean | CoordinatesOptions;
+  coordinates?: CoordinatesInput;
 }
 
 export interface ChessImageGeneratorOptions extends RenderOptions {}
@@ -80,7 +88,8 @@ export interface ResolvedColors {
 
 export interface ResolvedCoordinates {
   enabled: boolean;
-  color: string;
+  position: CoordinatesPosition;
+  color?: string;
 }
 
 export interface ResolvedRenderOptions {

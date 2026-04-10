@@ -89,25 +89,34 @@ describe("validateBoardColors", () => {
 });
 
 describe("validateCoordinatesOption", () => {
-  it("accepts booleans and valid object shapes", () => {
-    expect(() => validateCoordinatesOption(false)).not.toThrow();
-    expect(() => validateCoordinatesOption(true)).not.toThrow();
+  it("accepts booleans, string modes, and valid object shapes", () => {
+    expect(() => validateCoordinatesOption(false, 0)).not.toThrow();
+    expect(() => validateCoordinatesOption(true, 0)).not.toThrow();
+    expect(() => validateCoordinatesOption("inside", 0)).not.toThrow();
+    expect(() => validateCoordinatesOption("border", 24)).not.toThrow();
     expect(() =>
       validateCoordinatesOption({
         enabled: true,
+        position: "inside",
         color: "#333",
-      }),
+      }, 0),
     ).not.toThrow();
   });
 
   it("rejects invalid coordinates option shapes", () => {
-    expect(() => validateCoordinatesOption("true" as never)).toThrow(ValidationError);
-    expect(() => validateCoordinatesOption({ enabled: "yes" } as never)).toThrow(
+    expect(() => validateCoordinatesOption("true" as never, 0)).toThrow(
       ValidationError,
     );
-    expect(() => validateCoordinatesOption({ color: "bogus" })).toThrow(
+    expect(() => validateCoordinatesOption({ enabled: "yes" } as never, 0)).toThrow(
       ValidationError,
     );
+    expect(() => validateCoordinatesOption({ color: "bogus" }, 0)).toThrow(
+      ValidationError,
+    );
+    expect(() => validateCoordinatesOption("border", 0)).toThrow(ValidationError);
+    expect(
+      () => validateCoordinatesOption({ position: "border" }, 0),
+    ).toThrow(ValidationError);
   });
 });
 

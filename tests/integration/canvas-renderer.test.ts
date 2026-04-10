@@ -6,6 +6,7 @@ import { createBoardGeometry } from "../../src/core/geometry";
 import { parseFEN } from "../../src/core/parsers";
 import { CanvasPngRenderer } from "../../src/render/canvas-renderer";
 import { resolveTheme } from "../../src/themes/resolver";
+import { ValidationError } from "../../src/types/errors";
 import type { ThemeDefinition } from "../../src/types/types";
 
 async function getPixel(buffer: Buffer, x: number, y: number) {
@@ -15,6 +16,37 @@ async function getPixel(buffer: Buffer, x: number, y: number) {
   context.drawImage(image, 0, 0);
   const { data } = context.getImageData(Math.round(x), Math.round(y), 1, 1);
   return Array.from(data);
+}
+
+async function countDifferingPixels(
+  leftBuffer: Buffer,
+  rightBuffer: Buffer,
+  area: { x: number; y: number; width: number; height: number },
+) {
+  const leftImage = await loadImage(leftBuffer);
+  const rightImage = await loadImage(rightBuffer);
+  const leftCanvas = createCanvas(leftImage.width, leftImage.height);
+  const rightCanvas = createCanvas(rightImage.width, rightImage.height);
+  const leftContext = leftCanvas.getContext("2d");
+  const rightContext = rightCanvas.getContext("2d");
+  leftContext.drawImage(leftImage, 0, 0);
+  rightContext.drawImage(rightImage, 0, 0);
+  const leftData = leftContext.getImageData(area.x, area.y, area.width, area.height).data;
+  const rightData = rightContext.getImageData(area.x, area.y, area.width, area.height).data;
+  let count = 0;
+
+  for (let index = 0; index < leftData.length; index += 4) {
+    if (
+      leftData[index] !== rightData[index] ||
+      leftData[index + 1] !== rightData[index + 1] ||
+      leftData[index + 2] !== rightData[index + 2] ||
+      leftData[index + 3] !== rightData[index + 3]
+    ) {
+      count += 1;
+    }
+  }
+
+  return count;
 }
 
 describe("CanvasPngRenderer", () => {
@@ -30,6 +62,7 @@ describe("CanvasPngRenderer", () => {
       flipped: false,
       coordinates: {
         enabled: false,
+        position: "inside",
         color: "#333",
       },
       colors: {
@@ -77,6 +110,7 @@ describe("CanvasPngRenderer", () => {
       flipped: false,
       coordinates: {
         enabled: false,
+        position: "inside",
         color: "#333",
       },
       colors: {
@@ -111,6 +145,7 @@ describe("CanvasPngRenderer", () => {
       ...request,
       coordinates: {
         enabled: false,
+        position: "inside",
         color: "#333",
       },
     });
@@ -118,11 +153,62 @@ describe("CanvasPngRenderer", () => {
       ...request,
       coordinates: {
         enabled: true,
+        position: "border",
         color: "#333",
       },
     });
 
     expect(enabled.equals(disabled)).toBe(false);
+  });
+
+  it("renders automatic coordinates with a border band when borderSize is set", async () => {
+    const automatic = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      borderSize: 24,
+      coordinates: true,
+    });
+    const disabled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      borderSize: 24,
+      coordinates: false,
+    });
+    const explicitInside = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      borderSize: 24,
+      coordinates: "inside",
+    });
+
+    expect(automatic.equals(disabled)).toBe(false);
+    expect(
+      await countDifferingPixels(
+        automatic,
+        explicitInside,
+        { x: 0, y: 376, width: 400, height: 24 },
+      ),
+    ).toBeGreaterThan(10);
+  });
+
+  it("renders automatic coordinates inside the edge squares when no border exists", async () => {
+    const automatic = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      coordinates: true,
+    });
+    const disabled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      coordinates: false,
+    });
+
+    expect(automatic.equals(disabled)).toBe(false);
   });
 
   it("does not render coordinate labels when disabled", async () => {
@@ -141,6 +227,88 @@ describe("CanvasPngRenderer", () => {
     });
 
     expect(disabled.equals(omitted)).toBe(true);
+  });
+
+  it("renders explicit inside coordinates without requiring a border", async () => {
+    const inside = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      coordinates: "inside",
+    });
+    const disabled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      coordinates: false,
+    });
+
+    expect(inside.equals(disabled)).toBe(false);
+  });
+
+  it("renders explicit border coordinates when a border exists", async () => {
+    const border = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      borderSize: 24,
+      coordinates: "border",
+    });
+    const disabled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      borderSize: 24,
+      coordinates: false,
+    });
+
+    expect(border.equals(disabled)).toBe(false);
+  });
+
+  it("rejects explicit border coordinates without a border", async () => {
+    await expect(
+      renderChess({
+        fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+        size: 400,
+        style: "cburnett",
+        coordinates: "border",
+      }),
+    ).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it("renders flipped inside coordinates differently from the non-flipped inside view", async () => {
+    const nonFlipped = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      coordinates: "inside",
+    });
+    const flipped = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 400,
+      style: "cburnett",
+      coordinates: "inside",
+      flipped: true,
+    });
+
+    expect(flipped.equals(nonFlipped)).toBe(false);
+  });
+
+  it("suppresses inside coordinates when a small valid render cannot fit them legibly", async () => {
+    const enabled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 128,
+      style: "cburnett",
+      coordinates: "inside",
+    });
+    const disabled = await renderChess({
+      fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+      size: 128,
+      style: "cburnett",
+      coordinates: false,
+    });
+
+    expect(enabled.equals(disabled)).toBe(true);
   });
 
   it("suppresses coordinates when a small valid render cannot fit them legibly", async () => {
@@ -174,6 +342,7 @@ describe("CanvasPngRenderer", () => {
       flipped: false,
       coordinates: {
         enabled: false,
+        position: "inside",
         color: "#333",
       },
       colors: {

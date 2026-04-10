@@ -162,37 +162,35 @@ describe("render snapshots", () => {
       borderSize: 24,
       coordinates: {
         enabled: true,
+        position: "border",
         color: "#333",
       },
       flipped: true,
     });
-    const nonFlipped = await renderChess({
+    const disabled = await renderChess({
       fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
       size: 400,
       style: "cburnett",
       borderSize: 24,
-      coordinates: {
-        enabled: true,
-        color: "#333",
-      },
+      coordinates: false,
       flipped: false,
     });
 
-    expect(buffer.equals(nonFlipped)).toBe(false);
+    expect(buffer.equals(disabled)).toBe(false);
     expect(
       await countDifferingPixels(
         buffer,
-        nonFlipped,
-        { x: 24, y: 376, width: 44, height: 24 },
+        disabled,
+        { x: 24, y: 376, width: 352, height: 24 },
       ),
-    ).toBeGreaterThan(10);
+    ).toBeGreaterThan(100);
     expect(
       await countDifferingPixels(
         buffer,
-        nonFlipped,
-        { x: 0, y: 24, width: 24, height: 44 },
+        disabled,
+        { x: 0, y: 24, width: 24, height: 352 },
       ),
-    ).toBeGreaterThan(10);
+    ).toBeGreaterThan(100);
   });
 
   it("matches bordered board snapshot without breaking piece placement", async () => {

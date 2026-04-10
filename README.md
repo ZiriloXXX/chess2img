@@ -89,7 +89,25 @@ const png = await renderChess({
 await writeFile("board.png", png);
 ```
 
-### Coordinates And Border
+### Automatic Coordinates
+
+```ts
+import { writeFile } from "node:fs/promises";
+import { renderChess } from "chess2img";
+
+const png = await renderChess({
+  fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+  size: 480,
+  style: "cburnett",
+  coordinates: true,
+});
+
+await writeFile("board-with-auto-coordinates.png", png);
+```
+
+`coordinates: true` chooses `border` mode when `borderSize > 0`, otherwise it falls back to `inside` mode.
+
+### Border Coordinates
 
 ```ts
 import { writeFile } from "node:fs/promises";
@@ -102,11 +120,28 @@ const png = await renderChess({
   borderSize: 24,
   coordinates: {
     enabled: true,
+    position: "border",
     color: "#333",
   },
 });
 
-await writeFile("board-with-coordinates.png", png);
+await writeFile("board-with-border-coordinates.png", png);
+```
+
+### Inside Coordinates
+
+```ts
+import { writeFile } from "node:fs/promises";
+import { renderChess } from "chess2img";
+
+const png = await renderChess({
+  fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1",
+  size: 480,
+  style: "cburnett",
+  coordinates: "inside",
+});
+
+await writeFile("board-with-inside-coordinates.png", png);
 ```
 
 ### Class API
@@ -227,12 +262,16 @@ Semantics:
 - `style`: built-in theme alias
 - `theme`: built-in theme name, registered custom theme name, or inline `ThemeDefinition`
 - `highlightSquares`: array of algebraic squares such as `["e4", "d5"]`
-- `coordinates`: `boolean` or `{ enabled?: boolean; color?: string }`
+- `coordinates`: `boolean`, `"border"`, `"inside"`, or `{ enabled?: boolean; position?: "border" | "inside"; color?: string }`
 - `colors.lightSquare`
 - `colors.darkSquare`
 - `colors.highlight`
 
-`coordinates: true` enables default coordinate labels. `coordinates: false` or omitting the option disables them. If coordinates are enabled while `borderSize` is `0`, rendering still succeeds but no labels are visible because no border band exists for them. At very small valid sizes, the renderer suppresses coordinates when they cannot fit legibly inside the available border bands.
+`coordinates: false` or omitting the option disables labels. `coordinates: true` enables labels and chooses `border` mode when `borderSize > 0`, otherwise `inside` mode. Explicit `coordinates: "inside"` is always valid. Explicit `coordinates: "border"` requires `borderSize > 0` and throws `ValidationError` otherwise.
+
+Inside coordinates use automatic light/dark contrast by default, similar to chess.com. If `coordinates.color` is provided, that exact color is used instead. Border coordinates keep a single-color label style with `#333` as the default.
+
+At very small valid sizes, the renderer suppresses coordinates when they cannot fit legibly in the available border band or edge-square area.
 
 ### Errors
 

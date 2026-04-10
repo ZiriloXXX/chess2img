@@ -1,6 +1,8 @@
 import type {
   BoardColors,
+  CoordinatesInput,
   CoordinatesOptions,
+  CoordinatesPosition,
   Padding,
   RenderOptions,
   ResolvedColors,
@@ -29,7 +31,7 @@ export const DEFAULT_COLORS: ResolvedColors = {
 };
 export const DEFAULT_COORDINATES: ResolvedCoordinates = {
   enabled: false,
-  color: "#333",
+  position: "inside",
 };
 
 export function normalizeColors(colors?: BoardColors): ResolvedColors {
@@ -41,22 +43,38 @@ export function normalizeColors(colors?: BoardColors): ResolvedColors {
 }
 
 export function normalizeCoordinates(
-  coordinates?: boolean | CoordinatesOptions,
+  coordinates: CoordinatesInput | undefined,
+  borderSize: number,
 ): ResolvedCoordinates {
   if (coordinates === undefined || coordinates === false) {
     return { ...DEFAULT_COORDINATES };
   }
 
+  const defaultPosition: CoordinatesPosition =
+    borderSize > 0 ? "border" : "inside";
+
   if (coordinates === true) {
     return {
       enabled: true,
-      color: DEFAULT_COORDINATES.color,
+      position: defaultPosition,
+      color: defaultPosition === "border" ? "#333" : undefined,
     };
   }
 
+  if (coordinates === "border" || coordinates === "inside") {
+    return {
+      enabled: true,
+      position: coordinates,
+      color: coordinates === "border" ? "#333" : undefined,
+    };
+  }
+
+  const position = coordinates.position ?? defaultPosition;
+
   return {
     enabled: coordinates.enabled ?? true,
-    color: coordinates.color ?? DEFAULT_COORDINATES.color,
+    position,
+    color: coordinates.color ?? (position === "border" ? "#333" : undefined),
   };
 }
 
@@ -69,7 +87,7 @@ export function normalizeRenderInputs(
     size,
   );
   validateBoardColors(options.colors);
-  validateCoordinatesOption(options.coordinates);
+  validateCoordinatesOption(options.coordinates, borderSize);
 
   return {
     size,
@@ -82,6 +100,6 @@ export function normalizeRenderInputs(
     }),
     highlightSquares: normalizeHighlights(options.highlightSquares ?? []),
     colors: normalizeColors(options.colors),
-    coordinates: normalizeCoordinates(options.coordinates),
+    coordinates: normalizeCoordinates(options.coordinates, borderSize),
   };
 }
