@@ -15,6 +15,12 @@
 
 `chess2img` renders chessboard PNG, SVG, and JPEG images from FEN, PGN, or board-array inputs with a small Promise-based API for JavaScript and TypeScript users on Node.js.
 
+Supported output formats:
+
+- PNG
+- SVG
+- JPEG
+
 ## Features
 
 - Render PNG, SVG, or JPEG chessboard images from `fen`, `pgn`, or `board` input.
@@ -118,10 +124,40 @@ await renderFile("board.png", {
 
 `renderChess(...)` and `renderFile(...)` are the explicit PNG APIs.
 
+### Direct PNG, SVG, And JPEG Buffers
+
+```ts
+import { renderChess, renderJpeg, renderSvg } from "chess2img";
+
+const png = await renderChess({
+  fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+  size: 480,
+  style: "merida",
+});
+
+const svg = await renderSvg({
+  fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+  size: 480,
+  style: "merida",
+});
+
+const jpeg = await renderJpeg({
+  fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+  size: 480,
+  style: "merida",
+});
+```
+
 ### SVG And JPEG File Helpers
 
 ```ts
-import { renderJpegFile, renderSvgFile } from "chess2img";
+import { renderFile, renderJpegFile, renderSvgFile } from "chess2img";
+
+await renderFile("board.png", {
+  fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+  size: 480,
+  style: "merida",
+});
 
 await renderSvgFile("board.svg", {
   fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
@@ -236,10 +272,23 @@ const generator = new ChessImageGenerator({
 await generator.loadPGN("1. e4 e5 2. Nf3 Nc6 3. Bb5 a6");
 generator.setHighlights(["e4", "e5"]);
 
+const png = await generator.toBuffer();
+const svg = await generator.toSvg();
+const jpeg = await generator.toJpeg();
+
 await generator.toFile("board.png");
 await generator.toSvgFile("board.svg");
 await generator.toJpegFile("board.jpg");
 ```
+
+Class method summary:
+
+- `toBuffer()` -> PNG `Buffer`
+- `toFile(path)` -> writes PNG
+- `toSvg()` -> SVG `string`
+- `toSvgFile(path)` -> writes SVG
+- `toJpeg()` -> JPEG `Buffer`
+- `toJpegFile(path)` -> writes JPEG
 
 ### JavaScript Usage
 
@@ -271,7 +320,7 @@ Bundled built-in themes:
 
 Built-in themes are vendored in-package and render through the same theme pipeline as custom themes.
 
-## Custom Themes
+## Custom Piece Packs
 
 Register a reusable theme globally:
 
@@ -294,10 +343,36 @@ Or pass either:
 - a registered custom theme name through `theme: "custom-theme"`
 - an inline `ThemeDefinition` object through `theme: { ... }`
 
-Custom themes may use either:
+Custom piece packs may use either:
 
 - `svg` assets
 - `png` assets
+
+Expected piece-pack structure:
+
+```text
+my-pack/
+  wK.svg
+  wQ.svg
+  wR.svg
+  wB.svg
+  wN.svg
+  wP.svg
+  bK.svg
+  bQ.svg
+  bR.svg
+  bB.svg
+  bN.svg
+  bP.svg
+```
+
+You can point the theme definition at either SVG or PNG files. Mixing formats is also supported as long as all 12 canonical pieces are present.
+
+### Example Third-Party Packs
+
+- `chess.com-boards-and-pieces`: https://github.com/GiorgioMegrelli/chess.com-boards-and-pieces
+
+These are third-party repositories. They are not bundled with `chess2img`, and you should verify each pack's license terms before redistribution or repackaging.
 
 ## API
 
