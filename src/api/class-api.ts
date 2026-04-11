@@ -1,4 +1,3 @@
-import { parseBoardArray, parseFEN, parsePGN } from "../core/parsers";
 import { validateHighlightsInput } from "../core/validators";
 import { ValidationError } from "../types/errors";
 import type {
@@ -8,9 +7,13 @@ import type {
   RenderOptions,
 } from "../types/types";
 import { CanvasPngRenderer } from "../render/canvas-renderer";
-import { writeBufferToFile } from "../utils/io";
+import { CanvasJpegRenderer } from "../render/canvas-jpeg-renderer";
+import { SvgRenderer } from "../render/svg-renderer";
+import { writeBufferToFile, writeStringToFile } from "../utils/io";
 import { normalizeRenderInputs } from "../utils/normalization";
 import type { BoardPosition } from "../core/board";
+import { createRenderRequest } from "./render-request";
+import { parseBoardArray, parseFEN, parsePGN } from "../core/parsers";
 
 export class ChessImageGenerator {
   private position: BoardPosition | null = null;
@@ -54,27 +57,55 @@ export class ChessImageGenerator {
     }
 
     const renderer = new CanvasPngRenderer();
-    const normalized = normalizeRenderInputs({
+    const request = createRenderRequest(this.position, {
       ...this.defaults,
       highlights: this.highlights,
       highlightSquares: undefined,
     });
 
-    return renderer.render({
-      board: this.position,
-      theme: normalized.theme,
-      highlights: normalized.highlights,
-      size: normalized.size,
-      padding: normalized.padding,
-      borderSize: normalized.borderSize,
-      flipped: normalized.flipped,
-      colors: normalized.colors,
-      coordinates: normalized.coordinates,
-    });
+    return renderer.render(request);
   }
 
   async toFile(filePath: string): Promise<void> {
     const buffer = await this.toBuffer();
     await writeBufferToFile(filePath, buffer);
+  }
+
+  async toSvg(): Promise<string> {
+    if (!this.position) {
+      throw new ValidationError("No board position loaded");
+    }
+
+    const renderer = new SvgRenderer();
+    const request = createRenderRequest(this.position, {
+      ...this.defaults,
+      highlights: this.highlights,
+      highlightSquares: undefined,
+    });
+
+    return renderer.render(request);
+  }
+
+  async toSvgFile(filePath: string): Promise<void> {
+    await writeStringToFile(filePath, await this.toSvg());
+  }
+
+  async toJpeg(): Promise<Buffer> {
+    if (!this.position) {
+      throw new ValidationError("No board position loaded");
+    }
+
+    const renderer = new CanvasJpegRenderer();
+    const request = createRenderRequest(this.position, {
+      ...this.defaults,
+      highlights: this.highlights,
+      highlightSquares: undefined,
+    });
+
+    return renderer.render(request);
+  }
+
+  async toJpegFile(filePath: string): Promise<void> {
+    await writeBufferToFile(filePath, await this.toJpeg());
   }
 }

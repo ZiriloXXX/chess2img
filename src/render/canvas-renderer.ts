@@ -350,6 +350,12 @@ async function drawPieces(
 }
 
 export class CanvasPngRenderer implements Renderer<Buffer> {
+  protected createOutputBuffer(
+    canvas: ReturnType<typeof createCanvas>,
+  ): Buffer {
+    return canvas.toBuffer("image/png");
+  }
+
   async render(request: RenderRequest): Promise<Buffer> {
     try {
       const geometry = createBoardGeometry({
@@ -370,7 +376,7 @@ export class CanvasPngRenderer implements Renderer<Buffer> {
       drawCoordinates(context, request, geometry);
       await drawPieces(context, request, geometry);
 
-      return canvas.toBuffer("image/png");
+      return this.createOutputBuffer(canvas);
     } catch (error) {
       if (error instanceof RenderError) {
         throw error;

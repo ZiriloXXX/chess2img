@@ -2,7 +2,7 @@
 
 <div align="center">
   <img src="./assets/themes/cburnett/wK.png" alt="chess2img king icon" width="88" />
-  <p>Generate PNG chessboard images from FEN, PGN, or board arrays in Node.js.</p>
+  <p>Generate PNG, SVG, and JPEG chessboard images from FEN, PGN, or board arrays in Node.js.</p>
   <p>
     <a href="https://www.npmjs.com/package/chess2img"><img src="https://img.shields.io/npm/v/chess2img" alt="npm version" /></a>
     <a href="https://www.npmjs.com/package/chess2img"><img src="https://img.shields.io/npm/dm/chess2img" alt="npm downloads" /></a>
@@ -13,11 +13,11 @@
 
 ## Overview
 
-`chess2img` renders chessboard PNGs from FEN, PGN, or board-array inputs with a small Promise-based API for JavaScript and TypeScript users on Node.js.
+`chess2img` renders chessboard PNG, SVG, and JPEG images from FEN, PGN, or board-array inputs with a small Promise-based API for JavaScript and TypeScript users on Node.js.
 
 ## Features
 
-- Render PNG chessboard images from `fen`, `pgn`, or `board` input.
+- Render PNG, SVG, or JPEG chessboard images from `fen`, `pgn`, or `board` input.
 - Use five bundled built-in themes: `merida`, `alpha`, `cburnett`, `cheq`, and `leipzig`.
 - Highlight squares such as the last move or key tactical ideas.
 - Customize board colors, size, padding, border sizing, coordinates, and board orientation.
@@ -58,6 +58,36 @@ await writeFile("board.png", png);
 
 `renderChess(...)` returns a `Promise<Buffer>` containing PNG data.
 
+### SVG Output
+
+```ts
+import { writeFile } from "node:fs/promises";
+import { renderSvg } from "chess2img";
+
+const svg = await renderSvg({
+  fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+  size: 480,
+  style: "merida",
+});
+
+await writeFile("board.svg", svg, "utf8");
+```
+
+### JPEG Output
+
+```ts
+import { writeFile } from "node:fs/promises";
+import { renderJpeg } from "chess2img";
+
+const jpeg = await renderJpeg({
+  fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+  size: 480,
+  style: "merida",
+});
+
+await writeFile("board.jpg", jpeg);
+```
+
 ## Installation
 
 ```bash
@@ -77,16 +107,33 @@ If `canvas` fails to install, verify your system packages first. The library shi
 ### Functional API
 
 ```ts
-import { writeFile } from "node:fs/promises";
-import { renderChess } from "chess2img";
+import { renderFile } from "chess2img";
 
-const png = await renderChess({
+await renderFile("board.png", {
   fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
   size: 480,
   style: "merida",
 });
+```
 
-await writeFile("board.png", png);
+`renderChess(...)` and `renderFile(...)` are the explicit PNG APIs.
+
+### SVG And JPEG File Helpers
+
+```ts
+import { renderJpegFile, renderSvgFile } from "chess2img";
+
+await renderSvgFile("board.svg", {
+  fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+  size: 480,
+  style: "merida",
+});
+
+await renderJpegFile("board.jpg", {
+  fen: "4k3/8/8/8/8/8/8/4K3 w - - 0 1",
+  size: 480,
+  style: "merida",
+});
 ```
 
 ### Automatic Coordinates
@@ -190,6 +237,8 @@ await generator.loadPGN("1. e4 e5 2. Nf3 Nc6 3. Bb5 a6");
 generator.setHighlights(["e4", "e5"]);
 
 await generator.toFile("board.png");
+await generator.toSvgFile("board.svg");
+await generator.toJpegFile("board.jpg");
 ```
 
 ### JavaScript Usage
@@ -256,15 +305,32 @@ Custom themes may use either:
 
 - `new ChessImageGenerator(options?)`
 - `renderChess(options)`
+- `renderSvg(options)`
+- `renderJpeg(options)`
+- `renderFile(path, options)`
+- `renderSvgFile(path, options)`
+- `renderJpegFile(path, options)`
 - `registerTheme(theme)`
 
 ### Functional API
 
-`renderChess(...)` accepts exactly one position source:
+`renderChess(...)`, `renderSvg(...)`, and `renderJpeg(...)` accept exactly one position source:
 
 - `fen`
 - `pgn`
 - `board`
+
+Return values:
+
+- `renderChess(...)` -> `Promise<Buffer>` containing PNG data
+- `renderSvg(...)` -> `Promise<string>` containing SVG markup
+- `renderJpeg(...)` -> `Promise<Buffer>` containing JPEG data
+
+File helpers:
+
+- `renderFile(path, options)` -> writes PNG only
+- `renderSvgFile(path, options)` -> writes SVG only
+- `renderJpegFile(path, options)` -> writes JPEG only
 
 ### Class API
 
@@ -277,6 +343,10 @@ Methods:
 - `clearHighlights(): void`
 - `toBuffer(): Promise<Buffer>`
 - `toFile(filePath: string): Promise<void>`
+- `toSvg(): Promise<string>`
+- `toSvgFile(filePath: string): Promise<void>`
+- `toJpeg(): Promise<Buffer>`
+- `toJpegFile(filePath: string): Promise<void>`
 
 Semantics:
 
@@ -302,7 +372,7 @@ Semantics:
 
 `coordinates: false` or omitting the option disables labels. `coordinates: true` enables labels and chooses `border` mode when `borderSize > 0`, otherwise `inside` mode. Explicit `coordinates: "inside"` is always valid. Explicit `coordinates: "border"` requires `borderSize > 0` and throws `ValidationError` otherwise.
 
-`highlights` is the preferred API. Each entry may be a square string for a filled highlight, or an object with `square`, `style`, `color`, `opacity`, and `lineWidth`. `highlightSquares` remains available for backward compatibility, but should not be used together with `highlights` in the same call.
+`highlights` is the preferred API. Each entry may be a square string for a filled highlight, or an object with `square`, `style`, `color`, `opacity`, `lineWidth`, and `radius`. `highlightSquares` remains available for backward compatibility, but should not be used together with `highlights` in the same call.
 
 Inside coordinates use automatic light/dark contrast by default, similar to chess.com. If `coordinates.color` is provided, that exact color is used instead. Border coordinates keep a single-color label style with `#333` as the default.
 

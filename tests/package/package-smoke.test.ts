@@ -21,8 +21,18 @@ describe("published package shape", () => {
     const cjsModule = require("../../dist/index.cjs");
 
     expect(typeof esmModule.renderChess).toBe("function");
+    expect(typeof esmModule.renderSvg).toBe("function");
+    expect(typeof esmModule.renderJpeg).toBe("function");
+    expect(typeof esmModule.renderFile).toBe("function");
+    expect(typeof esmModule.renderSvgFile).toBe("function");
+    expect(typeof esmModule.renderJpegFile).toBe("function");
     expect(typeof esmModule.ChessImageGenerator).toBe("function");
     expect(typeof cjsModule.renderChess).toBe("function");
+    expect(typeof cjsModule.renderSvg).toBe("function");
+    expect(typeof cjsModule.renderJpeg).toBe("function");
+    expect(typeof cjsModule.renderFile).toBe("function");
+    expect(typeof cjsModule.renderSvgFile).toBe("function");
+    expect(typeof cjsModule.renderJpegFile).toBe("function");
     expect(typeof cjsModule.ChessImageGenerator).toBe("function");
   });
 });

@@ -1,49 +1,42 @@
-import { parseBoardArray, parseFEN, parsePGN } from "../core/parsers";
-import { ValidationError } from "../types/errors";
 import type { RenderChessOptions } from "../types/types";
 import { CanvasPngRenderer } from "../render/canvas-renderer";
-import { normalizeRenderInputs } from "../utils/normalization";
-
-function parseInputPosition(options: RenderChessOptions) {
-  if (typeof options.fen === "string") {
-    return parseFEN(options.fen);
-  }
-
-  if (typeof options.pgn === "string") {
-    return parsePGN(options.pgn);
-  }
-
-  if (Array.isArray(options.board)) {
-    return parseBoardArray(options.board);
-  }
-
-  throw new ValidationError("Exactly one of fen, pgn, or board must be provided");
-}
+import { CanvasJpegRenderer } from "../render/canvas-jpeg-renderer";
+import { SvgRenderer } from "../render/svg-renderer";
+import { writeBufferToFile, writeStringToFile } from "../utils/io";
+import { createRenderRequestFromOptions } from "./render-request";
 
 export async function renderChess(options: RenderChessOptions): Promise<Buffer> {
-  const provided = [
-    typeof options.fen === "string" ? options.fen : undefined,
-    typeof options.pgn === "string" ? options.pgn : undefined,
-    Array.isArray(options.board) ? options.board : undefined,
-  ].filter((value) => value !== undefined);
-
-  if (provided.length !== 1) {
-    throw new ValidationError("Exactly one of fen, pgn, or board must be provided");
-  }
-
-  const position = parseInputPosition(options);
   const renderer = new CanvasPngRenderer();
-  const normalized = normalizeRenderInputs(options);
+  return renderer.render(createRenderRequestFromOptions(options));
+}
 
-  return renderer.render({
-    board: position,
-    theme: normalized.theme,
-    highlights: normalized.highlights,
-    size: normalized.size,
-    padding: normalized.padding,
-    borderSize: normalized.borderSize,
-    flipped: normalized.flipped,
-    colors: normalized.colors,
-    coordinates: normalized.coordinates,
-  });
+export async function renderSvg(options: RenderChessOptions): Promise<string> {
+  const renderer = new SvgRenderer();
+  return renderer.render(createRenderRequestFromOptions(options));
+}
+
+export async function renderJpeg(options: RenderChessOptions): Promise<Buffer> {
+  const renderer = new CanvasJpegRenderer();
+  return renderer.render(createRenderRequestFromOptions(options));
+}
+
+export async function renderFile(
+  filePath: string,
+  options: RenderChessOptions,
+): Promise<void> {
+  await writeBufferToFile(filePath, await renderChess(options));
+}
+
+export async function renderSvgFile(
+  filePath: string,
+  options: RenderChessOptions,
+): Promise<void> {
+  await writeStringToFile(filePath, await renderSvg(options));
+}
+
+export async function renderJpegFile(
+  filePath: string,
+  options: RenderChessOptions,
+): Promise<void> {
+  await writeBufferToFile(filePath, await renderJpeg(options));
 }
